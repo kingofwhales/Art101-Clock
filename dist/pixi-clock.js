@@ -51370,82 +51370,95 @@ var _gsScope = (typeof module !== "undefined" && module.exports && typeof global
 	}
 }("PixiPlugin"));
 },{"gsap/TweenLite":205}],207:[function(require,module,exports) {
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var commonDestForZero = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForOne = [{ rotation: 270 }, { rotation: 180 }, { rotation: 135 }, { rotation: 135 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 90 }];
-var commonDestForTwo = [{ rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 360 }, { rotation: 90 }];
-var commonDestForThree = [{ rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForFour = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForFive = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForSix = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForSeven = [{ rotation: 270 }, { rotation: 180 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForEight = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
-var commonDestForNine = [{ rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }];
+var commonDestForZero = [270, 270, 270, 270, 270, 180, 360, 270, 270, 270, 180, 360, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForOne = [270, 180, 135, 135, 270, 180, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 180, 360, 135, 135, 135, 135, 360, 90];
+var commonDestForTwo = [270, 180, 270, 270, 270, 180, 360, 360, 360, 270, 180, 360, 360, 360, 90, 360, 360, 360, 360, 270, 270, 90, 360, 90];
+var commonDestForThree = [270, 180, 270, 180, 270, 180, 360, 360, 360, 360, 360, 360, 360, 360, 90, 360, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForFour = [270, 270, 270, 180, 135, 135, 360, 270, 180, 360, 135, 135, 270, 270, 90, 360, 270, 180, 360, 270, 270, 270, 270, 90];
+var commonDestForFive = [270, 270, 270, 180, 270, 180, 360, 270, 180, 360, 360, 360, 360, 360, 360, 360, 90, 360, 360, 90, 360, 270, 270, 90];
+var commonDestForSix = [270, 270, 270, 270, 270, 180, 360, 270, 180, 270, 180, 360, 360, 360, 360, 360, 90, 360, 360, 90, 360, 270, 270, 90];
+var commonDestForSeven = [270, 180, 135, 135, 135, 135, 360, 360, 135, 135, 135, 135, 360, 360, 270, 270, 270, 180, 360, 270, 270, 270, 270, 90];
+var commonDestForEight = [270, 270, 270, 270, 270, 180, 360, 270, 180, 270, 180, 360, 360, 360, 90, 360, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForNine = [270, 270, 270, 180, 135, 135, 360, 270, 180, 360, 135, 135, 360, 360, 90, 360, 270, 180, 360, 270, 270, 270, 270, 90];
 
-var redlineDestForZero = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForOne = [{ rotation: 360 }, { rotation: 270 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 90 }, { rotation: 180 }];
-var redlineDestForTwo = [{ rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }, { rotation: 90 }, { rotation: 180 }];
-var redlineDestForThree = [{ rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 90 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForFour = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 135 }, { rotation: 135 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 270 }, { rotation: 180 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForFive = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForSix = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForSeven = [{ rotation: 360 }, { rotation: 270 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForEight = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 90 }, { rotation: 180 }, { rotation: 360 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
-var redlineDestForNine = [{ rotation: 360 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 360 }, { rotation: 270 }, { rotation: 360 }, { rotation: 135 }, { rotation: 135 }, { rotation: 360 }, { rotation: 90 }, { rotation: 180 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 90 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 270 }, { rotation: 180 }];
+var redlineDestForZero = [360, 270, 270, 270, 270, 270, 360, 360, 270, 270, 270, 360, 360, 90, 270, 270, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForOne = [360, 270, 135, 135, 360, 270, 360, 90, 270, 270, 180, 360, 90, 270, 270, 270, 270, 360, 135, 135, 135, 135, 90, 180];
+var redlineDestForTwo = [360, 270, 360, 270, 270, 270, 360, 360, 360, 360, 270, 360, 360, 90, 180, 360, 360, 360, 90, 270, 270, 180, 90, 180];
+var redlineDestForThree = [360, 270, 360, 270, 360, 270, 360, 360, 360, 360, 360, 360, 360, 90, 180, 90, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForFour = [360, 270, 270, 270, 135, 135, 90, 270, 270, 360, 135, 135, 360, 270, 180, 90, 270, 270, 90, 270, 270, 270, 270, 180];
+var redlineDestForFive = [360, 270, 270, 270, 360, 270, 360, 360, 270, 360, 360, 360, 360, 360, 360, 90, 180, 360, 90, 180, 90, 270, 270, 180];
+var redlineDestForSix = [360, 270, 270, 270, 270, 270, 360, 360, 270, 360, 270, 360, 360, 360, 360, 90, 180, 360, 90, 180, 90, 270, 270, 180];
+var redlineDestForSeven = [360, 270, 135, 135, 135, 135, 360, 360, 135, 135, 135, 135, 360, 90, 270, 270, 270, 270, 90, 270, 270, 270, 270, 180];
+var redlineDestForEight = [360, 270, 270, 270, 270, 270, 360, 360, 270, 360, 270, 360, 360, 90, 180, 90, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForNine = [360, 270, 270, 270, 135, 135, 360, 360, 270, 360, 135, 135, 360, 90, 180, 90, 270, 270, 90, 270, 270, 270, 270, 180];
 
 var data = [
 // 0
 {
   number: 0,
+  dests: combine(commonDestForZero, redlineDestForZero),
   common: commonDestForZero,
   red: redlineDestForZero
 },
 //   1
 {
   number: 1,
+  dests: combine(commonDestForOne, redlineDestForOne),
   common: commonDestForOne,
   red: redlineDestForOne
 }, {
   number: 2,
+  dests: combine(commonDestForTwo, redlineDestForTwo),
   common: commonDestForTwo,
   red: redlineDestForTwo
 },
 //   2
 {
   number: 3,
+  dests: combine(commonDestForThree, redlineDestForThree),
   common: commonDestForThree,
   red: redlineDestForThree
 }, {
   number: 4,
+  dests: combine(commonDestForFour, redlineDestForFour),
   common: commonDestForFour,
   red: redlineDestForFour
 }, {
   number: 5,
+  dests: combine(commonDestForFive, redlineDestForFive),
   common: commonDestForFive,
   red: redlineDestForFive
 }, {
   number: 6,
+  dests: combine(commonDestForSix, redlineDestForSix),
   common: commonDestForSix,
   red: redlineDestForSix
 }, {
   number: 7,
+  dests: combine(commonDestForSeven, redlineDestForSeven),
   common: commonDestForSeven,
   red: redlineDestForSeven
 }, {
   number: 8,
+  dests: combine(commonDestForEight, redlineDestForEight),
   common: commonDestForEight,
   red: redlineDestForEight
 }, {
   number: 9,
+  dests: combine(commonDestForNine, redlineDestForNine),
   common: commonDestForNine,
   red: redlineDestForNine
 }];
 
 function combine(red, black) {
+  if (red.length !== black.length) {
+    throw 'two arrays have different length';
+  }
   var newArray = [];
   var counter = 0;
   var _iteratorNormalCompletion = true;
@@ -51478,12 +51491,114 @@ function combine(red, black) {
   return newArray;
 }
 
+function purifyDests(data) {
+  var purifiedDests = [];
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
+
+      var item = {
+        number: i.number,
+        dests: []
+      };
+      var dests = i.dests;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = dests[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var j = _step3.value;
+
+          item.dests.push(j.rotation);
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+
+      purifiedDests.push(item);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  return purifiedDests;
+}
+
+var purifiedData = purifyDests(data);
+var add720Data = add720(purifiedData);
+
+function add720(data) {
+  var result = [];
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
+
+  try {
+    for (var _iterator4 = data[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+      var i = _step4.value;
+
+      var item = { number: i.number, dests: [] };
+      item.dests = i.dests.map(function (element) {
+        return element + 720;
+      });
+      result.push(item);
+    }
+  } catch (err) {
+    _didIteratorError4 = true;
+    _iteratorError4 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion4 && _iterator4.return) {
+        _iterator4.return();
+      }
+    } finally {
+      if (_didIteratorError4) {
+        throw _iteratorError4;
+      }
+    }
+  }
+
+  return result;
+}
+
 function getData() {
-  return data;
+  for (var _len = arguments.length, targets = Array(_len), _key = 0; _key < _len; _key++) {
+    targets[_key] = arguments[_key];
+  }
+
+  return [data[targets[0]], data[targets[1]], data[targets[2]], data[targets[3]]];
 }
 
 exports.getData = getData;
 exports.combine = combine;
+exports.purifyDests = purifyDests;
 },{}],3:[function(require,module,exports) {
 "use strict";
 
@@ -51532,7 +51647,7 @@ var state = play;
 // responsive length for boxes. gap is 1/4 of one full line. left and right margin is one full line.
 lineWidth = WIDTH / 87 * 2;
 xDis = lineWidth / 2;
-yDis = HEIGHT / 12;
+yDis = HEIGHT / 10;
 
 var colRotation = [];
 for (var i = 0; i < 16; i++) {
@@ -51581,13 +51696,15 @@ function setup() {
       var divident = counterRow % 2;
       var level = Math.floor(counterRow / 2);
       var offset = divident === 0 ? 1 : -1;
-      xPos = divident * lineWidth + counterCol * (7 / 3) * lineWidth + offset * 4;
+      xPos = divident * lineWidth + counterCol * (7 / 3) * lineWidth + offset * 2;
       yPos = level * yDis;
+      // let color = divident === 0 ? 0x000000 : 0xed33332
+      var color = 0xff9933;
       var centerX = counterCol * (7 / 3) * lineWidth + lineWidth;
       var centerY = yPos + lineHeight / 2;
       var roundBox = new GRAPHICS();
       roundBox.lineStyle(2, 0xff9933, 1);
-      roundBox.beginFill(0xff9933);
+      roundBox.beginFill(color);
       roundBox.drawRoundedRect(xPos, yPos, lineWidth, lineHeight, 1);
       roundBox.endFill();
       roundBox.x = centerX;
@@ -51611,22 +51728,37 @@ function setup() {
   // rectangle.y = 170;
   // app.stage.addChild(rectangle);
 
+  regularRotation();
+  // app.ticker.add(delta => gameLoop(delta));
+}
+
+function regularRotation() {
   var tl = new _gsap.TimelineMax();
-  tl.to(boxes, 4, {
+  tl.to(boxes, 8, {
     pixi: {
       rotation: "+=360"
     },
     ease: _gsap.Power0.easeNone,
     repeat: -1
   });
-  // app.ticker.add(delta => gameLoop(delta));
 }
-
 function gameLoop(delta) {
   state(delta);
 }
 
+// let data = getData(1,3,6,0)
+// console.log(data)
+// let flatData = flattenData (data)
+// let flatDataCommon = flatData.common
+// let flatDataRed = flatData.red
+// let radCommon = convertToRad(flatDataCommon)
+// let radRed = convertToRad(flatDataRed);
+// let allRad = combine(radCommon, radRed)
+// let addLoopAllRad = allRad.map((element) => {
+//   return element + 6.28
+// })
 function play(delta) {
+  var counter = 0;
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -51636,7 +51768,11 @@ function play(delta) {
       var _i = _step.value;
 
       // four seconds one loop. every frame 1.5 degrees converted to rads is 0.027965
-      _i.rotation += 0.028;
+      // console.log(i.rotation)
+      if (_i.rotation < addLoopAllRad[counter]) {
+        _i.rotation += 0.014;
+      }
+      counter++;
     }
   } catch (err) {
     _didIteratorError = true;
@@ -51657,22 +51793,154 @@ function play(delta) {
 function degToRad(deg) {
   return deg * Math.PI / 180;
 }
+function radToDeg(rad) {
+  return rad * 180 / Math.PI;
+}
+
+function convertToRad(data) {
+  return data.map(function (element) {
+    return degToRad(element);
+  });
+}
+
+var SPPED = degToRad(360) / 8;
 
 function transitionToNumber() {
   // for (let i of boxes) {
   console.log('---running tran to num----');
-  console.log((0, _store.getData)());
-  // setTimeout(function () {
-  //   let tl = new TimelineMax();
-  //   tl.to(boxes, 8, {
-  //     pixi: {
-  //       rotation: "1080"
-  //     },
-  //     ease: Power0.easeNone
-  //   });
-  // }, 1000)
+  var data = (0, _store.getData)(1, 3, 6, 0);
+  console.log(data);
+  var flatData = flattenData(data);
+  var flatDataCommon = flatData.common;
+  var flatDataRed = flatData.red;
+  var radCommon = convertToRad(flatDataCommon);
+  var radRed = convertToRad(flatDataRed);
+  // console.log(radCommon)
+  // console.log(radRed)
+
+
+  var tl = new _gsap.TimelineMax();
+
+  var toggle = document.getElementsByClassName("toggle")[0];
+  toggle.addEventListener("click", function () {
+    console.log('-clicked-');
+    tl.paused(!tl.paused());
+  });
+  var counter = 0;
+  var redCounter = 0;
+  var delay = 0;
+  var duration = 8;
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = radCommon[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var _i2 = _step2.value;
+
+      var commonRot = _i2 + degToRad(360);
+      var redRot = radRed[redCounter] + degToRad(360);
+
+      // let commonPrev = radToDeg(boxes[counter].rotation)
+      // let redPrev = radToDeg(boxes[counter+1].rotation)
+      // console.log(commonPrev)
+
+      // let commonDiff = commonRot - commonPrev > 0 ? commonRot - commonPrev : 360 - (commonRot - commonPrev);
+      // let diff = Math.abs(commonRot - boxes[counter].rotation)
+      // let duration = diff / SPPED
+
+      tl.to(boxes[counter], duration, {
+        // pixi: {
+        //   rotation: `+=${commonDiff}`
+        // },
+        directionalRotation: {
+          rotation: commonRot + "_cw",
+          useRadians: true
+        },
+        ease: _gsap.Power0.easeNone
+      }, delay);
+
+      tl.to(boxes[counter + 1], duration, {
+        // pixi: {
+        //   rotation: `+=${commonDiff}`
+        // },
+        directionalRotation: {
+          rotation: commonRot + "_cw",
+          useRadians: true
+        },
+        ease: _gsap.Power0.easeNone
+      }, delay);
+
+      tl.to(boxes[counter + 1], 2, {
+        directionalRotation: {
+          rotation: redRot + "_cw",
+          useRadians: true
+        },
+        ease: _gsap.Power0.easeNone
+      }, duration + delay);
+
+      counter += 2;
+      delay += 0.2;
+      redCounter++;
+    }
+    // setTimeout(function () {
+    //   let tl = new TimelineMax();
+    //   tl.to(boxes, 8, {
+    //     pixi: {
+    //       rotation: flatData[]
+    //     },
+    //     ease: Power0.easeNone
+    //   });
+    // }, 1000)
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
 }
 
+function flattenData(data) {
+  var newArray = {
+    red: [],
+    common: []
+  };
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = data[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var _i3 = _step3.value;
+
+      newArray.red = newArray.red.concat(_i3.red);
+      newArray.common = newArray.common.concat(_i3.common);
+    }
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
+
+  return newArray;
+}
 exports.setup = setup;
 exports.transitionToNumber = transitionToNumber;
 },{"pixi.js":4,"gsap":203,"gsap/PixiPlugin":204,"./store.js":207}],2:[function(require,module,exports) {
@@ -51684,7 +51952,9 @@ var _process = require('./src/process.js');
 // import { TweenMax } from 'gsap';
 // import PixiPlugin from "gsap/PixiPlugin";
 
-(0, _process.transitionToNumber)();
+setTimeout(function () {
+  (0, _process.transitionToNumber)();
+}, 2000);
 // const APPLICATION = PIXI.Application
 // const GRAPHICS = PIXI.Graphics
 // const WIDTH = window.innerWidth;
@@ -51733,7 +52003,7 @@ var _process = require('./src/process.js');
 //     pixi: { rotation: 60 }
 //   });
 // }, 4000)
-},{"./src/process.js":3}],202:[function(require,module,exports) {
+},{"./src/process.js":3}],211:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -51856,5 +52126,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[202,2])
+},{}]},{},[211,2])
 //# sourceMappingURL=/dist/pixi-clock.map

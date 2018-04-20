@@ -8,7 +8,9 @@ import {
 
 
 setup()
-transitionToNumber()
+setTimeout(() => {
+  transitionToNumber();
+}, 2000)
 // const APPLICATION = PIXI.Application
 // const GRAPHICS = PIXI.Graphics
 // const WIDTH = window.innerWidth;
