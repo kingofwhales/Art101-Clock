@@ -1,3 +1,7 @@
+import {
+  combine
+} from './utils.js'
+
 let commonDestForZero = [
   270,
   270,
@@ -646,62 +650,16 @@ let data = [
   }
 ];
 
-function combine (red, black) {
-  if (red.length !== black.length) {
-    throw 'two arrays have different length'
-  }
-  let newArray = []
-  let counter = 0
-  for (let i of red) {
-    newArray.push(i)
-    newArray.push(black[counter])
-    counter++
-  }
-  return newArray
-}
 
-function purifyDests (data) {
-  let purifiedDests = []
-  for (let i of data) {
-    let item = {
-      number: i.number,
-      dests: []
-    }
-    let dests = i.dests
-    for (let j of dests) {
-      item.dests.push(j.rotation)
-    }
-    purifiedDests.push(item)
-  }
-  return purifiedDests
-}
-
-let purifiedData = purifyDests(data)
-let add720Data = add720(purifiedData)
-
-function add720 (data) {
-  let result = [];
-  for (let i of data) {
-    let item = { number: i.number, dests: [] };
-    item.dests = i.dests.map((element) => {
-      return element + 720
-    })
-    result.push(item);
-  }
-  return result;
-}
-
-function getData (...targets) {
+function getData (currentNumber) {
   return [
-    data[targets[0]],
-    data[targets[1]],
-    data[targets[2]],
-    data[targets[3]]
+    data[currentNumber[0]],
+    data[currentNumber[1]],
+    data[currentNumber[2]],
+    data[currentNumber[3]]
   ]
 }
 
 export {
-  getData,
-  combine,
-  purifyDests
+  getData
 }
