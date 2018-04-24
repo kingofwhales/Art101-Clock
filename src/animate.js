@@ -1,7 +1,7 @@
 import { TimelineMax, Power0 } from "gsap";
 import PixiPlugin from "gsap/PixiPlugin";
 
-let duration = 8
+let duration = 0.5
 
 function regularRotation(boxes) {
   let tl = new TimelineMax();
@@ -25,7 +25,7 @@ function animateTo(data, boxes) {
   while (counter < length) {
     let commonRot = common[counter];
     let redRot = red[counter];
-
+    
     // animate left
     tl.to(
       boxes[itemCounter],
@@ -70,12 +70,52 @@ function animateTo(data, boxes) {
 
     counter++;
     itemCounter += 2;
-    delay += 0.2;
+    delay += 0.02;
   }
 }
 
+function animatePartsTo (data, boxes) {
+  let tl = new TimelineMax();
+  let counter = 0
+  let baseDelay = 0
+  // let length = 96
+  while (counter < 191) {
+    // animate left
+    let commonRot = data[counter]
+    let redRot = data[counter+1]
+    // console.log('--what-')
+    // console.log(commonRot)
+    tl.to(
+      boxes[counter],
+      commonRot.duration,
+      {
+        directionalRotation: {
+          rotation: "+=" + commonRot.diff,
+          useRadians: true
+        },
+        ease: Power0.easeNone
+      },
+      commonRot.delay + baseDelay
+    )
 
+    tl.to(
+      boxes[counter+1],
+      redRot.duration,
+      {
+        directionalRotation: {
+          rotation: "+=" + redRot.diff,
+          useRadians: true
+        },
+        ease: Power0.easeNone
+      },
+      redRot.delay + baseDelay
+    );
+    counter += 2
+    baseDelay += 0.02
+  }
+}
 export {
   regularRotation,
-  animateTo
+  animateTo,
+  animatePartsTo
 }

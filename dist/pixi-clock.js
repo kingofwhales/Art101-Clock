@@ -41016,18 +41016,139 @@ function combine(red, black) {
   return newArray;
 }
 
+//  write a test first 
+function compareOriDest(ori, dest, loopDuration, useRadians) {
+  var counter = 0;
+  var result = [];
+  var rotations = useRadians ? 6.28319 : 360;
+  var speed = rotations / loopDuration;
+  var delay = loopDuration / 4;
+  var difference = useRadians ? 1.8 : 120;
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = ori[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
+
+      var item = {};
+      if (i !== dest[counter]) {
+        item.dest = dest[counter];
+        item.ori = i;
+        item.diff = Math.abs(dest[counter] - i);
+        item.duration = Math.abs(dest[counter] - i) / speed;
+        if (counter % 2 != 0) {
+          var prev = ori[counter - 1];
+          var current = i;
+          if (Math.abs(current - prev) >= difference) {
+            item.delay = delay;
+          } else {
+            item.delay = 0;
+          }
+        } else {
+          item.delay = 0;
+        }
+      } else {
+        item.delay = 0;
+        item.duration = 0;
+        item.diff = 0;
+      }
+      result.push(item);
+      counter++;
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  console.log(result);
+  return result;
+}
+
+// this shit will have to be refactored. impossible to understand . 0 readibility.
+function getShortestClockwiseDest(ori, dest, useRadians) {
+  var length = ori.length;
+  var offset = useRadians ? 3.14159 : 180;
+  // let full = useRadians ? 6.28319 : 360
+  var i = 0;
+  var newDest = [];
+  while (i < length) {
+    var commonOri = ori[i];
+    var redOri = ori[i + 1];
+    var commonDest = dest[i];
+    var redDest = dest[i + 1];
+    var swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
+    var swapRedDest = commonDest >= offset ? commonDest - offset : commonDest + offset;
+
+    // same rule for calculating degrees to go 
+    var diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
+    var diffRegularRed = redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
+    var diffSwapCommon = swapCommonDest >= commonOri ? swapCommonDest - commonOri : 2 * offset - (commonOri - swapCommonDest);
+    var diffSwapRed = swapRedDest >= redOri ? swapRedDest - redOri : 2 * offset - (redOri - swapRedDest);
+
+    var diffRegular = diffRegularCommon + diffRegularRed;
+    var diffSwap = diffSwapCommon + diffSwapRed;
+
+    if (diffSwap <= diffRegular) {
+      newDest.push(swapCommonDest);
+      newDest.push(swapRedDest);
+    } else {
+      newDest.push(commonDest);
+      newDest.push(redDest);
+    }
+    i += 2;
+  }
+  return newDest;
+}
+// function arrayPlusOne (array) {
+
+// }
+
 exports.degToRad = degToRad;
 exports.radToDeg = radToDeg;
 exports.combine = combine;
+exports.getShortestClockwiseDest = getShortestClockwiseDest;
 },{}],207:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getData = undefined;
+exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
 
 var _utils = require('./utils.js');
+
+var time = void 0,
+    currentDisplayData = void 0;
+
+function getCurrentDisplayData() {
+  return currentDisplayData;
+}
+function setCurrentDisplayData(data) {
+  currentDisplayData = data;
+  return currentDisplayData;
+}
+
+function getPrevTime() {
+  return time;
+}
+
+function setPrevTime(date) {
+  time = date;
+  return time;
+}
 
 var commonDestForZero = [270, 270, 270, 270, 270, 180, 360, 270, 270, 270, 180, 360, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 270, 90];
 var commonDestForOne = [270, 180, 135, 135, 270, 180, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 180, 360, 135, 135, 135, 135, 360, 90];
@@ -41114,6 +41235,10 @@ function getData(currentNumber) {
 }
 
 exports.getData = getData;
+exports.getPrevTime = getPrevTime;
+exports.setPrevTime = setPrevTime;
+exports.getCurrentDisplayData = getCurrentDisplayData;
+exports.setCurrentDisplayData = setCurrentDisplayData;
 },{"./utils.js":213}],218:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
@@ -51523,7 +51648,7 @@ var _gsScope = (typeof module !== "undefined" && module.exports && typeof global
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.animateTo = exports.regularRotation = undefined;
+exports.animatePartsTo = exports.animateTo = exports.regularRotation = undefined;
 
 var _gsap = require("gsap");
 
@@ -51533,7 +51658,7 @@ var _PixiPlugin2 = _interopRequireDefault(_PixiPlugin);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var duration = 8;
+var duration = 0.5;
 
 function regularRotation(boxes) {
   var tl = new _gsap.TimelineMax();
@@ -51589,12 +51714,43 @@ function animateTo(data, boxes) {
 
     counter++;
     itemCounter += 2;
-    delay += 0.2;
+    delay += 0.02;
   }
 }
 
+function animatePartsTo(data, boxes) {
+  var tl = new _gsap.TimelineMax();
+  var counter = 0;
+  var baseDelay = 0;
+  // let length = 96
+  while (counter < 191) {
+    // animate left
+    var commonRot = data[counter];
+    var redRot = data[counter + 1];
+    // console.log('--what-')
+    // console.log(commonRot)
+    tl.to(boxes[counter], commonRot.duration, {
+      directionalRotation: {
+        rotation: "+=" + commonRot.diff,
+        useRadians: true
+      },
+      ease: _gsap.Power0.easeNone
+    }, commonRot.delay + baseDelay);
+
+    tl.to(boxes[counter + 1], redRot.duration, {
+      directionalRotation: {
+        rotation: "+=" + redRot.diff,
+        useRadians: true
+      },
+      ease: _gsap.Power0.easeNone
+    }, redRot.delay + baseDelay);
+    counter += 2;
+    baseDelay += 0.02;
+  }
+}
 exports.regularRotation = regularRotation;
 exports.animateTo = animateTo;
+exports.animatePartsTo = animatePartsTo;
 },{"gsap":218,"gsap/PixiPlugin":219}],3:[function(require,module,exports) {
 'use strict';
 
@@ -51674,7 +51830,7 @@ function setup() {
   // which row
   var level = void 0;
   // for color
-  var fillColor = 0xff9933;
+  // let fillColor = 0xff9933
   var borderColor = 0xff9933;
   // for pivot point
   var centerX = void 0,
@@ -51701,7 +51857,7 @@ function setup() {
       // offset = divident === 0 ? 1 : -1
       xPos = xBaseline + divident * lineWidth;
       yPos = level * yDis;
-      // let color = divident === 0 ? 0x000000 : 0xed33332
+      var fillColor = divident === 0 ? 0x000000 : 0xed33332;
       centerX = xBaseline + lineWidth;
       centerY = yPos + lineHeight / 2;
       var roundBox = new GRAPHICS();
@@ -51721,30 +51877,46 @@ function setup() {
   }
   //  starting the regular rotations
   (0, _animate.regularRotation)(boxes);
+
+  // for user testings
+  var increment = document.getElementsByClassName("increment")[0];
+  increment.addEventListener("click", function () {
+    plusOne();
+  });
 }
 
 function transitionToNumber() {
-  var currentNumber = [1, 3, 6, 0];
+  var currentNumber = [1, 8, 5, 6];
+  // let currentNumber = getTimeArray(new Date())
   var data = getDestsData(currentNumber, true, 360);
-
   // for debugging
   // let toggle = document.getElementsByClassName("toggle")[0];
   // toggle.addEventListener("click", function() {
   //   console.log('-clicked-')
   //   tl.paused(!tl.paused());
   // });
-
+  // console.log('-prev-')
+  // console.log(data)
   (0, _animate.animateTo)(data, boxes);
+  (0, _store.setCurrentDisplayData)(data);
 }
 
+function roundToFourDecimals(data) {
+  return data.map(function (element) {
+    return Math.round(element * 10000) / 10000;
+  });
+}
 // for getting data
 function getDestsData(currentNumber, useRadians, compensateDegrees) {
   var data = (0, _store.getData)(currentNumber);
-
+  console.log('--before flat--');
+  console.log(data);
   // flatten four into one
   data = flattenData(data);
   var radData = {};
   var compData = {};
+  var roundedData = {};
+
   //  if return one converted to radians
   if (useRadians) {
     for (var i in data) {
@@ -51760,7 +51932,23 @@ function getDestsData(currentNumber, useRadians, compensateDegrees) {
     data = compData;
   }
 
+  for (var _i2 in data) {
+    roundedData[_i2] = roundToFourDecimals(data[_i2]);
+  }
+  data = roundedData;
+
+  console.log("--after rounded--");
+  console.log(data);
+
   return data;
+}
+
+function getTimeArray(date) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  hours = hours < 10 ? '0' + hours : String(hours);
+  minutes = minutes < 10 ? "0" + minutes : String(minutes);
+  return (hours + minutes).split('');
 }
 
 //  for processing the data array
@@ -51800,6 +51988,33 @@ function flattenData(data) {
   return newArray;
 }
 
+function plusOne() {
+  var date = (0, _store.getPrevTime)() || new Date();
+  date.setMinutes(date.getMinutes() + 1);
+  (0, _store.setPrevTime)(date);
+  // let array = getTimeArray(date)
+  var array = getTimeArray(new Date("Mon Apr 23 2018 18:57:43 GMT+0800 (CST)"));
+  var data = getDestsData(array, true, 360);
+  var prevData = (0, _store.getCurrentDisplayData)();
+  console.log('-now-');
+
+  var newData = compareOriDest(prevData.dests, data.dests);
+
+  // animatePartsTo(newData, boxes)
+  // before animate, try compare the data and have a final list of animated lines and dests
+  // animateTo(data, boxes)
+}
+
+function compareOriDest(ori, dest) {
+  // get shortest first, then do the duration, rotations and delay, the last three might also need to be broken into two parts
+  // let newData = compareOriDest(prevData.dests, data.dests, 8, true);
+  // console.log('-checking-')
+  // console.log(convertToDegree(ori))
+  // console.log(convertToDegree(dest))
+
+  // getShortestClockwiseDest(ori, dest, true)
+}
+
 function compensateDegreesBy(data, deg) {
   return data.map(function (element) {
     return element + (0, _utils.degToRad)(360);
@@ -51809,6 +52024,12 @@ function compensateDegreesBy(data, deg) {
 function convertToRad(data) {
   return data.map(function (element) {
     return (0, _utils.degToRad)(element);
+  });
+}
+
+function convertToDegree(data) {
+  return data.map(function (element) {
+    return (0, _utils.radToDeg)(element);
   });
 }
 
@@ -51840,8 +52061,8 @@ var _process = require('./src/process.js');
 // import PixiPlugin from "gsap/PixiPlugin";
 setTimeout(function () {
   (0, _process.transitionToNumber)();
-}, 2000);
-},{"./src/process.js":3}],217:[function(require,module,exports) {
+}, 0);
+},{"./src/process.js":3}],222:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -51964,5 +52185,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[217,2])
+},{}]},{},[222,2])
 //# sourceMappingURL=/dist/pixi-clock.map

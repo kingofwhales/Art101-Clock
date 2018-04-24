@@ -2,6 +2,25 @@ import {
   combine
 } from './utils.js'
 
+let time, currentDisplayData
+
+function getCurrentDisplayData () {
+  return currentDisplayData
+}
+function setCurrentDisplayData (data) {
+  currentDisplayData = data
+  return currentDisplayData
+}
+
+function getPrevTime () {
+  return time
+}
+
+function setPrevTime (date) {
+  time = date
+  return time
+}
+
 let commonDestForZero = [
   270,
   270,
@@ -661,5 +680,9 @@ function getData (currentNumber) {
 }
 
 export {
-  getData
+  getData,
+  getPrevTime,
+  setPrevTime,
+  getCurrentDisplayData,
+  setCurrentDisplayData
 }

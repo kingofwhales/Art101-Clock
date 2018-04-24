@@ -12,4 +12,4 @@ setup()
 // after some delay, prepare the transitioning to number
 setTimeout(() => {
   transitionToNumber();
-}, 2000)
+}, 0)

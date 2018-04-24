@@ -2,17 +2,23 @@ import * as PIXI from "pixi.js";
 
 import {
   getData,
-  combine
+  getPrevTime,
+  setPrevTime,
+  setCurrentDisplayData,
+  getCurrentDisplayData
 } from './store.js'
 
 import {
   radToDeg,
-  degToRad
+  degToRad,
+  // compareOriDest
+  // arrayPlusOne
 } from './utils.js'
 
 import {
   regularRotation,
-  animateTo
+  animateTo,
+  animatePartsTo
 } from './animate.js'
 
 // setting const variables
@@ -68,7 +74,7 @@ function setup () {
   // which row
   let level
   // for color
-  let fillColor = 0xff9933
+  // let fillColor = 0xff9933
   let borderColor = 0xff9933;
   // for pivot point
   let centerX, centerY
@@ -94,7 +100,7 @@ function setup () {
       // offset = divident === 0 ? 1 : -1
       xPos = xBaseline + divident * lineWidth
       yPos = level * yDis
-      // let color = divident === 0 ? 0x000000 : 0xed33332
+      let fillColor = divident === 0 ? 0x000000 : 0xed33332
       centerX = xBaseline + lineWidth
       centerY = yPos + lineHeight / 2;
       let roundBox = new GRAPHICS();
@@ -114,31 +120,49 @@ function setup () {
   }
   //  starting the regular rotations
   regularRotation(boxes)
+
+  // for user testings
+  let increment = document.getElementsByClassName("increment")[0];
+  increment.addEventListener("click", function() {
+    plusOne();
+  });
 }
 
 
 function transitionToNumber () {
-  let currentNumber = [1, 3, 6, 0]
+  let currentNumber = [1, 8, 5, 6]
+  // let currentNumber = getTimeArray(new Date())
   let data = getDestsData(currentNumber, true, 360)
-
   // for debugging
   // let toggle = document.getElementsByClassName("toggle")[0];
   // toggle.addEventListener("click", function() {
   //   console.log('-clicked-')
   //   tl.paused(!tl.paused());
   // });
-
+  // console.log('-prev-')
+  // console.log(data)
   animateTo(data, boxes)
+  setCurrentDisplayData(data)
 }
 
+function roundToFourDecimals (data) {
+  return data.map((element) => {
+    return Math.round(element * 10000) / 10000;
+  })
+}
 // for getting data
 function getDestsData (currentNumber, useRadians, compensateDegrees) {
   let data = getData(currentNumber)
-
+  console.log('--before flat--')
+  console.log(data)
   // flatten four into one
   data = flattenData(data);
   let radData = {}
   let compData = {}
+  let roundedData = {}
+
+
+
   //  if return one converted to radians
   if (useRadians) {
     for (let i in data) {
@@ -154,9 +178,24 @@ function getDestsData (currentNumber, useRadians, compensateDegrees) {
     data = compData
   }
 
+  for (let i in data) {
+    roundedData[i] = roundToFourDecimals(data[i]);
+  }
+  data = roundedData;
+
+  console.log("--after rounded--");
+  console.log(data);
+
   return data
 }
 
+function getTimeArray (date) {
+  let hours = date.getHours()
+  let minutes = date.getMinutes()
+  hours = hours < 10 ? '0' + hours : String(hours)
+  minutes = minutes < 10 ? "0" + minutes : String(minutes)
+  return (hours + minutes).split('')
+}
 
 //  for processing the data array
 function flattenData(data) {
@@ -173,6 +212,35 @@ function flattenData(data) {
   return newArray;
 }
 
+function plusOne () {
+  let date = getPrevTime() || new Date()
+  date.setMinutes(date.getMinutes() + 1)
+  setPrevTime(date)
+  // let array = getTimeArray(date)
+  let array = getTimeArray(new Date("Mon Apr 23 2018 18:57:43 GMT+0800 (CST)"));
+  let data = getDestsData(array, true, 360)
+  let prevData = getCurrentDisplayData()
+  console.log('-now-')
+
+  let newData = compareOriDest(prevData.dests, data.dests)
+
+  // animatePartsTo(newData, boxes)
+  // before animate, try compare the data and have a final list of animated lines and dests
+  // animateTo(data, boxes)
+}
+
+function compareOriDest (ori, dest) {
+  // get shortest first, then do the duration, rotations and delay, the last three might also need to be broken into two parts
+  // let newData = compareOriDest(prevData.dests, data.dests, 8, true);
+  // console.log('-checking-')
+  // console.log(convertToDegree(ori))
+  // console.log(convertToDegree(dest))
+
+  // getShortestClockwiseDest(ori, dest, true)
+}
+
+
+
 function compensateDegreesBy (data, deg) {
   return data.map((element) => {
     return element + degToRad(360)
@@ -182,6 +250,12 @@ function compensateDegreesBy (data, deg) {
 function convertToRad(data) {
   return data.map(element => {
     return degToRad(element);
+  });
+}
+
+function convertToDegree(data) {
+  return data.map(element => {
+    return radToDeg(element);
   });
 }
 
