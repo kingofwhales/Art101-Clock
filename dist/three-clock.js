@@ -49335,9 +49335,8 @@ var HEIGHT = window.innerHeight;
 
 var scene = void 0,
     renderer = void 0,
-    camera = void 0,
-    cube = void 0,
-    cube2 = void 0;
+    camera = void 0;
+var cubesCollection = [];
 
 setUp();
 
@@ -49391,9 +49390,17 @@ function createPlane() {
 
 function createLines() {
   var boxWidth = WIDTH / 70;
-  var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
+  // let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
   var color = new THREE.Color("yellow");
   var material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+  var counterRow = 0;
+  var counterCol = 0;
+  var xBaseline = 0;
+  var yBaseline = 0;
+  var rows = 6;
+  var columns = 16;
+  var yGap = HEIGHT / 12;
+  var xGap = boxWidth;
 
   // each column has 12 lines, 6 rows, 2 lines on each row, left and right
   // the whole block has 16 columns, repeat
@@ -49401,25 +49408,22 @@ function createLines() {
   // condition 2: which row based on divided by 2
   // draw each column first because of the animation order
   // each column has a baseline x pos. increment line width to get respective coordinates
-  var counterRow = 0;
-  var counterCol = 0;
-  var xBaseline = 0;
-  var yBaseline = 0;
 
-  // to be decided
-  var yGap = HEIGHT / 12;
-  var xGap = boxWidth;
-
-  while (counterCol < 16) {
+  while (counterCol < columns) {
     counterRow = 0;
-    var drawRightFirst = counterCol < 8 ? true : false;
-    while (counterRow < 12) {
-      var _cube = new THREE.Mesh(boxGeometry, material);
+    var drawRightFirst = counterCol < columns / 2 ? true : false;
+    var drawRightFirstIndex = drawRightFirst ? 1 : -1;
+    while (counterRow < rows * 2) {
+      var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
       var divident = counterRow % 2;
       var rowNumber = Math.floor(counterRow / 2);
       var colNumber = counterCol;
       var xPos = void 0,
           yPos = void 0;
+      var translateToRight = divident === 0 ? 1 : -1;
+      boxGeometry.translate(translateToRight * (boxWidth / 2), 0, 0);
+
+      var cube = new THREE.Mesh(boxGeometry, material);
 
       //  it's spanning out from the center line xpos 0
       if (drawRightFirst) {
@@ -49435,11 +49439,13 @@ function createLines() {
       } else {
         yPos = yBaseline - (rowNumber - 2.5) * yGap;
       }
-      _cube.position.x = xPos;
-      _cube.position.y = yPos;
-      _cube.position.z = 10;
-      _cube.castShadow = true;
-      scene.add(_cube);
+      cube.position.x = xPos + drawRightFirstIndex * (translateToRight * (boxWidth / 2));
+      cube.position.y = yPos;
+      cube.position.z = 10;
+      // cube.rotation.z = 0.5
+      cube.castShadow = true;
+      scene.add(cube);
+      cubesCollection.push(cube);
       counterRow++;
     }
     counterCol++;
@@ -49462,15 +49468,43 @@ function createLines() {
 
 function iniRotations() {
   var tl = new _gsap.TimelineMax();
-  // tl.to(cube.rotation, 4, {
-  //   z: "-=6.28",
-  //   ease: Power0.easeNone,
-  //   repeat: -1
-  // }, 0);
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
 
-  // tl.to(cube.rotation, 4, {
-  //   z: "-=3.14",
-  // }, 4);
+  try {
+    for (var _iterator = cubesCollection[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var i = _step.value;
+
+      tl.to(i.rotation, 8, {
+        z: "-=6.28",
+        ease: Power0.easeNone,
+        repeat: -1
+      }, 0);
+    }
+    // tl.to(cube.rotation, 4, {
+    //   z: "-=6.28",
+    //   ease: Power0.easeNone,
+    //   repeat: -1
+    // }, 0);
+
+    // tl.to(cube.rotation, 4, {
+    //   z: "-=3.14",
+    // }, 4);
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
 }
 
 function render() {

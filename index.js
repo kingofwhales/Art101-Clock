@@ -4,7 +4,8 @@ import {TimelineMax} from 'gsap'
 const WIDTH = window.innerWidth
 const HEIGHT = window.innerHeight
 
-let scene, renderer, camera, cube, cube2
+let scene, renderer, camera
+let cubesCollection = []
 
 setUp()
 
@@ -59,10 +60,17 @@ function createPlane () {
 
 function createLines () {
   let boxWidth = WIDTH / 70;
-  let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
+  // let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
   let color = new THREE.Color("yellow");
   let material = new THREE.MeshLambertMaterial({ color: color.getHex() });
-
+  let counterRow = 0;
+  let counterCol = 0;
+  let xBaseline = 0;
+  let yBaseline = 0;
+  let rows = 6;
+  let columns = 16;
+  let yGap = HEIGHT / 12;
+  let xGap = boxWidth;
 
   // each column has 12 lines, 6 rows, 2 lines on each row, left and right
   // the whole block has 16 columns, repeat
@@ -70,24 +78,21 @@ function createLines () {
   // condition 2: which row based on divided by 2
   // draw each column first because of the animation order
   // each column has a baseline x pos. increment line width to get respective coordinates
-  let counterRow = 0
-  let counterCol = 0
-  let xBaseline = 0
-  let yBaseline = 0
 
-  // to be decided
-  let yGap = HEIGHT / 12
-  let xGap = boxWidth
-
-  while (counterCol < 16) {
+  while (counterCol < columns) {
     counterRow = 0
-    let drawRightFirst = counterCol < 8 ? true : false
-    while (counterRow < 12) {
-      let cube = new THREE.Mesh(boxGeometry, material);
+    let drawRightFirst = counterCol < columns/2 ? true : false
+    let drawRightFirstIndex = drawRightFirst ? 1 : -1
+    while (counterRow < rows * 2) {
+      let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
       let divident = counterRow % 2;
       let rowNumber = Math.floor(counterRow / 2);
       let colNumber = counterCol
       let xPos, yPos
+      let translateToRight = divident === 0 ? 1 : -1
+      boxGeometry.translate( translateToRight * (boxWidth/2), 0, 0 )
+
+      let cube = new THREE.Mesh(boxGeometry, material);
 
       //  it's spanning out from the center line xpos 0
       if (drawRightFirst) {
@@ -104,11 +109,13 @@ function createLines () {
       } else {
         yPos = yBaseline - (rowNumber - 2.5) * yGap;
       }
-      cube.position.x = xPos;
+      cube.position.x = xPos + drawRightFirstIndex * (translateToRight * (boxWidth / 2))
       cube.position.y = yPos;
       cube.position.z = 10;
+      // cube.rotation.z = 0.5
       cube.castShadow = true;
       scene.add(cube);
+      cubesCollection.push(cube)
       counterRow++;
     }
     counterCol++
@@ -131,6 +138,13 @@ function createLines () {
 
 function iniRotations() {
   let tl = new TimelineMax();
+  for (let i of cubesCollection) {
+    tl.to(i.rotation, 8, {
+      z: "-=6.28",
+      ease: Power0.easeNone,
+      repeat: -1
+    }, 0);
+  }
   // tl.to(cube.rotation, 4, {
   //   z: "-=6.28",
   //   ease: Power0.easeNone,
