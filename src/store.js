@@ -607,65 +607,65 @@ let data = [
   // 0
   {
     number: 0,
-    dests: combine(commonDestForZero, redlineDestForZero),
-    common: commonDestForZero,
-    red: redlineDestForZero
+    all: combine(commonDestForZero, redlineDestForZero),
+    left: commonDestForZero,
+    right: redlineDestForZero
   },
   //   1
   {
     number: 1,
-    dests: combine(commonDestForOne, redlineDestForOne),
-    common: commonDestForOne,
-    red: redlineDestForOne
+    all: combine(commonDestForOne, redlineDestForOne),
+    left: commonDestForOne,
+    right: redlineDestForOne
   },
   {
     number: 2,
-    dests: combine(commonDestForTwo, redlineDestForTwo),
-    common: commonDestForTwo,
-    red: redlineDestForTwo
+    all: combine(commonDestForTwo, redlineDestForTwo),
+    left: commonDestForTwo,
+    right: redlineDestForTwo
   },
   //   2
   {
     number: 3,
-    dests: combine(commonDestForThree, redlineDestForThree),
-    common: commonDestForThree,
-    red: redlineDestForThree
+    all: combine(commonDestForThree, redlineDestForThree),
+    left: commonDestForThree,
+    right: redlineDestForThree
   },
   {
     number: 4,
-    dests: combine(commonDestForFour, redlineDestForFour),
-    common: commonDestForFour,
-    red: redlineDestForFour
+    all: combine(commonDestForFour, redlineDestForFour),
+    left: commonDestForFour,
+    right: redlineDestForFour
   },
   {
     number: 5,
-    dests: combine(commonDestForFive, redlineDestForFive),
-    common: commonDestForFive,
-    red: redlineDestForFive
+    all: combine(commonDestForFive, redlineDestForFive),
+    left: commonDestForFive,
+    right: redlineDestForFive
   },
   {
     number: 6,
-    dests: combine(commonDestForSix, redlineDestForSix),
-    common: commonDestForSix,
-    red: redlineDestForSix
+    all: combine(commonDestForSix, redlineDestForSix),
+    left: commonDestForSix,
+    right: redlineDestForSix
   },
   {
     number: 7,
-    dests: combine(commonDestForSeven, redlineDestForSeven),
-    common: commonDestForSeven,
-    red: redlineDestForSeven
+    all: combine(commonDestForSeven, redlineDestForSeven),
+    left: commonDestForSeven,
+    right: redlineDestForSeven
   },
   {
     number: 8,
-    dests: combine(commonDestForEight, redlineDestForEight),
-    common: commonDestForEight,
-    red: redlineDestForEight
+    all: combine(commonDestForEight, redlineDestForEight),
+    left: commonDestForEight,
+    right: redlineDestForEight
   },
   {
     number: 9,
-    dests: combine(commonDestForNine, redlineDestForNine),
-    common: commonDestForNine,
-    red: redlineDestForNine
+    all: combine(commonDestForNine, redlineDestForNine),
+    left: commonDestForNine,
+    right: redlineDestForNine
   }
 ];
 

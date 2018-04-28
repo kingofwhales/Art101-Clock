@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({11:[function(require,module,exports) {
+})({4:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41340,7 +41340,7 @@ exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
 exports.SceneUtils = SceneUtils;
 exports.LensFlare = LensFlare;
-},{}],12:[function(require,module,exports) {
+},{}],6:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
  * VERSION: 1.20.4
@@ -49319,14 +49319,289 @@ if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); } //necessary in case Tween
 		_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
 
 })((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenMax");
-},{}],10:[function(require,module,exports) {
+},{}],14:[function(require,module,exports) {
 "use strict";
 
-var _three = require("three");
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+
+function radToDeg(rad) {
+  return rad * 180 / Math.PI;
+}
+
+function combine(red, black) {
+  if (red.length !== black.length) {
+    throw "two arrays have different length";
+  }
+  var newArray = [];
+  var counter = 0;
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = red[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var i = _step.value;
+
+      newArray.push(i);
+      newArray.push(black[counter]);
+      counter++;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return newArray;
+}
+
+//  write a test first 
+function compareOriDest(ori, dest, loopDuration, useRadians) {
+  var counter = 0;
+  var result = [];
+  var rotations = useRadians ? 6.28319 : 360;
+  var speed = rotations / loopDuration;
+  var delay = loopDuration / 4;
+  var difference = useRadians ? 1.8 : 120;
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = ori[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
+
+      var item = {};
+      if (i !== dest[counter]) {
+        item.dest = dest[counter];
+        item.ori = i;
+        item.diff = Math.abs(dest[counter] - i);
+        item.duration = Math.abs(dest[counter] - i) / speed;
+        if (counter % 2 != 0) {
+          var prev = ori[counter - 1];
+          var current = i;
+          if (Math.abs(current - prev) >= difference) {
+            item.delay = delay;
+          } else {
+            item.delay = 0;
+          }
+        } else {
+          item.delay = 0;
+        }
+      } else {
+        item.delay = 0;
+        item.duration = 0;
+        item.diff = 0;
+      }
+      result.push(item);
+      counter++;
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  console.log(result);
+  return result;
+}
+
+// this shit will have to be refactored. impossible to understand . 0 readibility.
+function getShortestClockwiseDest(ori, dest, useRadians) {
+  var length = ori.length;
+  var offset = useRadians ? 3.14159 : 180;
+  // let full = useRadians ? 6.28319 : 360
+  var i = 0;
+  var newDest = [];
+  while (i < length) {
+    var commonOri = ori[i];
+    var redOri = ori[i + 1];
+    var commonDest = dest[i];
+    var redDest = dest[i + 1];
+    var swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
+    var swapRedDest = commonDest >= offset ? commonDest - offset : commonDest + offset;
+
+    // same rule for calculating degrees to go 
+    var diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
+    var diffRegularRed = redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
+    var diffSwapCommon = swapCommonDest >= commonOri ? swapCommonDest - commonOri : 2 * offset - (commonOri - swapCommonDest);
+    var diffSwapRed = swapRedDest >= redOri ? swapRedDest - redOri : 2 * offset - (redOri - swapRedDest);
+
+    var diffRegular = diffRegularCommon + diffRegularRed;
+    var diffSwap = diffSwapCommon + diffSwapRed;
+
+    if (diffSwap <= diffRegular) {
+      newDest.push(swapCommonDest);
+      newDest.push(swapRedDest);
+    } else {
+      newDest.push(commonDest);
+      newDest.push(redDest);
+    }
+    i += 2;
+  }
+  return newDest;
+}
+// function arrayPlusOne (array) {
+
+// }
+
+exports.degToRad = degToRad;
+exports.radToDeg = radToDeg;
+exports.combine = combine;
+exports.getShortestClockwiseDest = getShortestClockwiseDest;
+},{}],13:[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
+
+var _utils = require('./utils.js');
+
+var time = void 0,
+    currentDisplayData = void 0;
+
+function getCurrentDisplayData() {
+  return currentDisplayData;
+}
+function setCurrentDisplayData(data) {
+  currentDisplayData = data;
+  return currentDisplayData;
+}
+
+function getPrevTime() {
+  return time;
+}
+
+function setPrevTime(date) {
+  time = date;
+  return time;
+}
+
+var commonDestForZero = [270, 270, 270, 270, 270, 180, 360, 270, 270, 270, 180, 360, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForOne = [270, 180, 135, 135, 270, 180, 360, 360, 270, 270, 90, 360, 360, 270, 270, 270, 180, 360, 135, 135, 135, 135, 360, 90];
+var commonDestForTwo = [270, 180, 270, 270, 270, 180, 360, 360, 360, 270, 180, 360, 360, 360, 90, 360, 360, 360, 360, 270, 270, 90, 360, 90];
+var commonDestForThree = [270, 180, 270, 180, 270, 180, 360, 360, 360, 360, 360, 360, 360, 360, 90, 360, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForFour = [270, 270, 270, 180, 135, 135, 360, 270, 180, 360, 135, 135, 270, 270, 90, 360, 270, 180, 360, 270, 270, 270, 270, 90];
+var commonDestForFive = [270, 270, 270, 180, 270, 180, 360, 270, 180, 360, 360, 360, 360, 360, 360, 360, 90, 360, 360, 90, 360, 270, 270, 90];
+var commonDestForSix = [270, 270, 270, 270, 270, 180, 360, 270, 180, 270, 180, 360, 360, 360, 360, 360, 90, 360, 360, 90, 360, 270, 270, 90];
+var commonDestForSeven = [270, 180, 135, 135, 135, 135, 360, 360, 135, 135, 135, 135, 360, 360, 270, 270, 270, 180, 360, 270, 270, 270, 270, 90];
+var commonDestForEight = [270, 270, 270, 270, 270, 180, 360, 270, 180, 270, 180, 360, 360, 360, 90, 360, 90, 360, 360, 270, 270, 270, 270, 90];
+var commonDestForNine = [270, 270, 270, 180, 135, 135, 360, 270, 180, 360, 135, 135, 360, 360, 90, 360, 270, 180, 360, 270, 270, 270, 270, 90];
+
+var redlineDestForZero = [360, 270, 270, 270, 270, 270, 360, 360, 270, 270, 270, 360, 360, 90, 270, 270, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForOne = [360, 270, 135, 135, 360, 270, 360, 90, 270, 270, 180, 360, 90, 270, 270, 270, 270, 360, 135, 135, 135, 135, 90, 180];
+var redlineDestForTwo = [360, 270, 360, 270, 270, 270, 360, 360, 360, 360, 270, 360, 360, 90, 180, 360, 360, 360, 90, 270, 270, 180, 90, 180];
+var redlineDestForThree = [360, 270, 360, 270, 360, 270, 360, 360, 360, 360, 360, 360, 360, 90, 180, 90, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForFour = [360, 270, 270, 270, 135, 135, 90, 270, 270, 360, 135, 135, 360, 270, 180, 90, 270, 270, 90, 270, 270, 270, 270, 180];
+var redlineDestForFive = [360, 270, 270, 270, 360, 270, 360, 360, 270, 360, 360, 360, 360, 360, 360, 90, 180, 360, 90, 180, 90, 270, 270, 180];
+var redlineDestForSix = [360, 270, 270, 270, 270, 270, 360, 360, 270, 360, 270, 360, 360, 360, 360, 90, 180, 360, 90, 180, 90, 270, 270, 180];
+var redlineDestForSeven = [360, 270, 135, 135, 135, 135, 360, 360, 135, 135, 135, 135, 360, 90, 270, 270, 270, 270, 90, 270, 270, 270, 270, 180];
+var redlineDestForEight = [360, 270, 270, 270, 270, 270, 360, 360, 270, 360, 270, 360, 360, 90, 180, 90, 180, 360, 90, 270, 270, 270, 270, 180];
+var redlineDestForNine = [360, 270, 270, 270, 135, 135, 360, 360, 270, 360, 135, 135, 360, 90, 180, 90, 270, 270, 90, 270, 270, 270, 270, 180];
+
+var data = [
+// 0
+{
+  number: 0,
+  all: (0, _utils.combine)(commonDestForZero, redlineDestForZero),
+  left: commonDestForZero,
+  right: redlineDestForZero
+},
+//   1
+{
+  number: 1,
+  all: (0, _utils.combine)(commonDestForOne, redlineDestForOne),
+  left: commonDestForOne,
+  right: redlineDestForOne
+}, {
+  number: 2,
+  all: (0, _utils.combine)(commonDestForTwo, redlineDestForTwo),
+  left: commonDestForTwo,
+  right: redlineDestForTwo
+},
+//   2
+{
+  number: 3,
+  all: (0, _utils.combine)(commonDestForThree, redlineDestForThree),
+  left: commonDestForThree,
+  right: redlineDestForThree
+}, {
+  number: 4,
+  all: (0, _utils.combine)(commonDestForFour, redlineDestForFour),
+  left: commonDestForFour,
+  right: redlineDestForFour
+}, {
+  number: 5,
+  all: (0, _utils.combine)(commonDestForFive, redlineDestForFive),
+  left: commonDestForFive,
+  right: redlineDestForFive
+}, {
+  number: 6,
+  all: (0, _utils.combine)(commonDestForSix, redlineDestForSix),
+  left: commonDestForSix,
+  right: redlineDestForSix
+}, {
+  number: 7,
+  all: (0, _utils.combine)(commonDestForSeven, redlineDestForSeven),
+  left: commonDestForSeven,
+  right: redlineDestForSeven
+}, {
+  number: 8,
+  all: (0, _utils.combine)(commonDestForEight, redlineDestForEight),
+  left: commonDestForEight,
+  right: redlineDestForEight
+}, {
+  number: 9,
+  all: (0, _utils.combine)(commonDestForNine, redlineDestForNine),
+  left: commonDestForNine,
+  right: redlineDestForNine
+}];
+
+function getData(currentNumber) {
+  return [data[currentNumber[0]], data[currentNumber[1]], data[currentNumber[2]], data[currentNumber[3]]];
+}
+
+exports.getData = getData;
+exports.getPrevTime = getPrevTime;
+exports.setPrevTime = setPrevTime;
+exports.getCurrentDisplayData = getCurrentDisplayData;
+exports.setCurrentDisplayData = setCurrentDisplayData;
+},{"./utils.js":14}],2:[function(require,module,exports) {
+'use strict';
+
+var _three = require('three');
 
 var THREE = _interopRequireWildcard(_three);
 
-var _gsap = require("gsap");
+var _gsap = require('gsap');
+
+var _store = require('./src/store.js');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -49337,6 +49612,8 @@ var scene = void 0,
     renderer = void 0,
     camera = void 0;
 var cubesCollection = [];
+var boxWidth = Math.floor(WIDTH / 70);
+var colStartingRadians = getColStartingRadians();
 
 setUp();
 
@@ -49345,8 +49622,147 @@ function setUp() {
   createLight();
   createPlane();
   createLines();
-  iniRotations();
+  // iniRotations ()
   render();
+  setTimeout(function () {
+    transitionToNumber();
+  }, 0);
+}
+
+function transitionToNumber() {
+  var currentNumber = [1, 8, 5, 6];
+  // let currentNumber = getTimeArray(new Date())
+  var data = getDestsData(currentNumber, true, 360);
+  console.log('--after processing-');
+  console.log(data);
+
+  animateToTarget(data);
+}
+
+function animateToTarget(target) {
+  // console.log(target)
+  var counter = 0;
+  var delay = 0;
+  var duration = 4;
+  var length = cubesCollection.length - 1; // because of plus two each iteration
+  var tl = new _gsap.TimelineMax();
+
+  while (counter < length) {
+    tl.to(cubesCollection[counter].rotation, duration, {
+      z: target[counter],
+      ease: Power0.easeNone
+    }, delay);
+
+    tl.to(cubesCollection[counter + 1].rotation, duration, {
+      z: target[counter],
+      ease: Power0.easeNone
+    }, delay);
+
+    if (target[counter] !== target[counter + 1]) {
+      tl.to(cubesCollection[counter + 1].rotation, duration, {
+        z: '-=1.5708',
+        ease: Power0.easeNone
+      }, duration + delay);
+    }
+    delay += 0.04;
+    counter += 2;
+  }
+}
+
+function getDestsData(currentNumber, useRadians, compensateDegrees) {
+  var data = (0, _store.getData)(currentNumber);
+  // console.log("--before flat--");
+  // console.log(data);
+  // flatten four into one
+  data = flattenData(data);
+  var radData = {};
+  var compData = {};
+  var roundedData = {};
+  var counterCWData = [];
+
+  //  if compenstated by degrees
+  if (compensateDegrees) {
+    for (var i in data) {
+      compData[i] = compensateDegreesBy(data[i], 360);
+    }
+    data = compData;
+  }
+
+  //  if return one converted to radians
+  if (useRadians) {
+    for (var _i in data) {
+      radData[_i] = convertToRad(data[_i]);
+    }
+    data = radData;
+  }
+
+  for (var _i2 in data) {
+    roundedData[_i2] = roundToFourDecimals(data[_i2]);
+  }
+  data = roundedData;
+
+  counterCWData = data.all.map(function (element) {
+    return -element;
+  });
+
+  // console.log("--after rounded--");
+  // console.log(data);
+
+  return counterCWData;
+}
+
+function roundToFourDecimals(data) {
+  return data.map(function (element) {
+    return Math.round(element * 10000) / 10000;
+  });
+}
+
+function flattenData(data) {
+  var newArray = {
+    right: [],
+    left: [],
+    all: []
+  };
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var i = _step.value;
+
+      newArray.right = newArray.right.concat(i.right);
+      newArray.left = newArray.left.concat(i.left);
+      newArray.all = newArray.all.concat(i.all);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return newArray;
+}
+
+function compensateDegreesBy(data, deg) {
+  return data.map(function (element) {
+    return element + 360;
+  });
+}
+
+function convertToRad(data) {
+  return data.map(function (element) {
+    return degToRad(element);
+  });
 }
 
 function createScene() {
@@ -49365,19 +49781,22 @@ function createScene() {
 
 function createLight() {
   var light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
-  light.position.set(0, 0, 300);
+  light.position.set(0, 200, 300);
   light.castShadow = true;
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
+  light.shadow.mapSize.width = 4096;
+  light.shadow.mapSize.height = 4096;
   scene.add(light);
+
+  // let light2 = new THREE.AmbientLight(0xb3e053, 1); // soft white light
+  // scene.add(light2);
 }
 
 function createPlane() {
   var planeGeometry = new THREE.PlaneBufferGeometry(WIDTH, HEIGHT);
   var planeMaterial = new THREE.MeshPhongMaterial({
     color: 0x00dddd,
-    specular: 0x009900,
-    shininess: 10,
+    // specular: 0xe888b6,
+    // shininess: 10,
     flatShading: THREE.FlatShading
   });
   var plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -49388,93 +49807,113 @@ function createPlane() {
   scene.add(plane);
 }
 
-function createLines() {
-  var boxWidth = WIDTH / 70;
-  // let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
-  var color = new THREE.Color("yellow");
-  var material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+function getLinesPositions() {
+  var positions = [];
   var counterRow = 0;
   var counterCol = 0;
-  var xBaseline = 0;
-  var yBaseline = 0;
   var rows = 6;
   var columns = 16;
-  var yGap = HEIGHT / 12;
+  var yGap = Math.floor(HEIGHT / 12);
   var xGap = boxWidth;
+  var halfWidth = boxWidth / 2;
 
-  // each column has 12 lines, 6 rows, 2 lines on each row, left and right
-  // the whole block has 16 columns, repeat
-  // condition 1: whether left or right based on divident
-  // condition 2: which row based on divided by 2
-  // draw each column first because of the animation order
-  // each column has a baseline x pos. increment line width to get respective coordinates
-
+  // still unclear. needs refactoring.
   while (counterCol < columns) {
     counterRow = 0;
-    var drawRightFirst = counterCol < columns / 2 ? true : false;
-    var drawRightFirstIndex = drawRightFirst ? 1 : -1;
+    var isleftEightColumns = counterCol < 8 ? true : false;
+    var colNumber = counterCol;
+    var radians = colStartingRadians[counterCol];
     while (counterRow < rows * 2) {
-      var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
-      var divident = counterRow % 2;
+      var item = {};
+      var isLeftSideIndividualColumn = counterRow % 2;
+      var offsetToRight = isLeftSideIndividualColumn === 0 ? -1 : 1;
       var rowNumber = Math.floor(counterRow / 2);
-      var colNumber = counterCol;
+      var translationsDistances = halfWidth * offsetToRight;
       var xPos = void 0,
           yPos = void 0;
-      var translateToRight = divident === 0 ? 1 : -1;
-      boxGeometry.translate(translateToRight * (boxWidth / 2), 0, 0);
 
-      var cube = new THREE.Mesh(boxGeometry, material);
-
-      //  it's spanning out from the center line xpos 0
-      if (drawRightFirst) {
-        xPos = divident === 0 ? xBaseline : xBaseline + boxWidth;
-        xPos -= 3 * boxWidth * (7.5 - colNumber);
+      // determining left or right 8 columns, different logic tip or end
+      if (isleftEightColumns) {
+        xPos = -((7.5 - counterCol) * boxWidth + (8 - counterCol) * boxWidth * 2);
       } else {
-        xPos = divident === 0 ? xBaseline + boxWidth : xBaseline;
-        xPos += 3 * boxWidth * (colNumber - 7.5);
+        xPos = (counterCol - 7.5) * boxWidth + (counterCol - 8) * boxWidth * 2;
       }
 
-      if (counterRow < 6) {
-        yPos = yBaseline + (2.5 - rowNumber) * yGap;
+      // offset the mesh positions
+      xPos += isLeftSideIndividualColumn * boxWidth - translationsDistances;
+
+      // determining top or bottom 3 rows
+      if (rowNumber < 3) {
+        yPos = (3 - rowNumber) * yGap;
       } else {
-        yPos = yBaseline - (rowNumber - 2.5) * yGap;
+        yPos = -(rowNumber - 3) * yGap;
       }
-      cube.position.x = xPos + drawRightFirstIndex * (translateToRight * (boxWidth / 2));
-      cube.position.y = yPos;
-      cube.position.z = 10;
-      // cube.rotation.z = 0.5
-      cube.castShadow = true;
-      scene.add(cube);
-      cubesCollection.push(cube);
+      item.xPos = xPos;
+      item.yPos = yPos;
+      item.radians = radians;
+      item.translation = translationsDistances;
+      positions.push(item);
       counterRow++;
     }
     counterCol++;
   }
+  return positions;
+}
 
-  // cube = new THREE.Mesh(boxGeometry, material);
-  // cube2 = new THREE.Mesh(boxGeometry, material);
-  // cube.position.x = -300;
-  // cube.position.y = 180;
-  // cube.position.z = 10;
+function drawLines(linesPositions) {
+  // console.log(linesPositions)
+  var color = new THREE.Color("yellow");
 
-  // cube2.position.x = -280;
-  // cube2.position.y = 180;
-  // cube2.position.z = 10;
-  // cube.castShadow = true;
-  // cube2.castShadow = true;
-  // scene.add(cube);
-  // scene.add(cube2);
+  var material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = linesPositions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
+
+      var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
+      boxGeometry.translate(i.translation, 0, 0);
+      var cube = new THREE.Mesh(boxGeometry, material);
+      cube.position.x = i.xPos;
+      cube.position.y = i.yPos;
+      cube.position.z = 10;
+      cube.rotation.z = i.radians;
+      cube.castShadow = true;
+      cubesCollection.push(cube);
+      scene.add(cube);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+}
+
+function createLines() {
+  var linesPositions = getLinesPositions();
+  drawLines(linesPositions);
 }
 
 function iniRotations() {
   var tl = new _gsap.TimelineMax();
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
-    for (var _iterator = cubesCollection[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var i = _step.value;
+    for (var _iterator3 = cubesCollection[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var i = _step3.value;
 
       tl.to(i.rotation, 8, {
         z: "-=6.28",
@@ -49492,26 +49931,41 @@ function iniRotations() {
     //   z: "-=3.14",
     // }, 4);
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
+}
+
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+
+function getColStartingRadians() {
+  //  starting at 90 degrees, each column tilt 20 degrees more
+  var item = [];
+  for (var i = 0; i < 16; i++) {
+    var increment = i * 20;
+    var rad = degToRad(increment + 90);
+    item.push(rad);
+  }
+  return item;
 }
 
 function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera);
 };
-},{"three":11,"gsap":12}],14:[function(require,module,exports) {
+},{"three":4,"gsap":6,"./src/store.js":13}],12:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -49533,7 +49987,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '54576' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '58701' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -49634,5 +50088,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[14,10])
+},{}]},{},[12,2])
 //# sourceMappingURL=/dist/three-clock.map

@@ -1,23 +1,148 @@
 import * as THREE from "three"
 import {TimelineMax} from 'gsap'
 
+import {
+  getData
+} from './src/store.js'
+
 const WIDTH = window.innerWidth
 const HEIGHT = window.innerHeight
 
 let scene, renderer, camera
 let cubesCollection = []
+let boxWidth = Math.floor(WIDTH / 70);
+let colStartingRadians = getColStartingRadians()
 
 setUp()
-
 
 function setUp() {
   createScene()
   createLight ()
   createPlane ()
   createLines ()
-  iniRotations ()
+  // iniRotations ()
   render()
+  setTimeout(() => {
+    transitionToNumber()
+  }, 0)
 }
+
+function transitionToNumber () {
+  let currentNumber = [1, 8, 5, 6];
+  // let currentNumber = getTimeArray(new Date())
+  let data = getDestsData(currentNumber, true, 360);
+  console.log('--after processing-')
+  console.log(data)
+
+  animateToTarget(data)
+
+}
+
+function animateToTarget (target) {
+  // console.log(target)
+  let counter = 0
+  let delay = 0
+  let duration = 4
+  let length = cubesCollection.length - 1 // because of plus two each iteration
+  let tl = new TimelineMax()
+
+  while (counter < length) {
+    tl.to(cubesCollection[counter].rotation, duration, {
+      z: target[counter],
+      ease: Power0.easeNone,
+    }, delay);
+
+    tl.to(cubesCollection[counter+1].rotation, duration, {
+      z: target[counter],
+      ease: Power0.easeNone
+    }, delay);
+
+    if (target[counter] !== target[counter+1]){
+      tl.to(cubesCollection[counter+1].rotation, duration, {
+        z: '-=1.5708',
+        ease: Power0.easeNone
+      }, duration + delay);
+    }
+    delay += 0.04
+    counter += 2
+  }
+}
+
+function getDestsData(currentNumber, useRadians, compensateDegrees) {
+  let data = getData(currentNumber);
+  // console.log("--before flat--");
+  // console.log(data);
+  // flatten four into one
+  data = flattenData(data);
+  let radData = {};
+  let compData = {};
+  let roundedData = {};
+  let counterCWData = []
+
+  //  if compenstated by degrees
+  if (compensateDegrees) {
+    for (let i in data) {
+      compData[i] = compensateDegreesBy(data[i], 360);
+    }
+    data = compData;
+  }
+
+  //  if return one converted to radians
+  if (useRadians) {
+    for (let i in data) {
+      radData[i] = convertToRad(data[i]);
+    }
+    data = radData;
+  }
+
+
+  for (let i in data) {
+    roundedData[i] = roundToFourDecimals(data[i]);
+  }
+  data = roundedData;
+
+  counterCWData = data.all.map((element) => {
+    return -element
+  })
+
+  // console.log("--after rounded--");
+  // console.log(data);
+
+  return counterCWData;
+}
+
+function roundToFourDecimals(data) {
+  return data.map(element => {
+    return Math.round(element * 10000) / 10000;
+  });
+}
+
+function flattenData(data) {
+  let newArray = {
+    right: [],
+    left: [],
+    all: []
+  };
+  for (let i of data) {
+    newArray.right = newArray.right.concat(i.right);
+    newArray.left = newArray.left.concat(i.left);
+    newArray.all = newArray.all.concat(i.all);
+  }
+  return newArray;
+}
+
+function compensateDegreesBy(data, deg) {
+  return data.map(element => {
+    return element + 360;
+  });
+}
+
+function convertToRad(data) {
+  return data.map(element => {
+    return degToRad(element);
+  });
+}
+
 
 function createScene() {
   scene = new THREE.Scene();
@@ -35,19 +160,22 @@ function createScene() {
 
 function createLight () {
   let light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
-  light.position.set(0, 0, 300);
+  light.position.set(0, 200, 300);
   light.castShadow = true;
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
+  light.shadow.mapSize.width = 4096;
+  light.shadow.mapSize.height = 4096;
   scene.add(light);
+
+  // let light2 = new THREE.AmbientLight(0xb3e053, 1); // soft white light
+  // scene.add(light2);
 }
 
 function createPlane () {
   let planeGeometry = new THREE.PlaneBufferGeometry(WIDTH, HEIGHT);
   let planeMaterial = new THREE.MeshPhongMaterial({
     color: 0x00dddd,
-    specular: 0x009900,
-    shininess: 10,
+    // specular: 0xe888b6,
+    // shininess: 10,
     flatShading: THREE.FlatShading
   });
   let plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -58,82 +186,81 @@ function createPlane () {
   scene.add(plane);  
 }
 
-function createLines () {
-  let boxWidth = WIDTH / 70;
-  // let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
-  let color = new THREE.Color("yellow");
-  let material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+
+function getLinesPositions () {
+  let positions = []
   let counterRow = 0;
   let counterCol = 0;
-  let xBaseline = 0;
-  let yBaseline = 0;
   let rows = 6;
   let columns = 16;
-  let yGap = HEIGHT / 12;
+  let yGap = Math.floor(HEIGHT / 12);
   let xGap = boxWidth;
+  let halfWidth = boxWidth / 2
 
-  // each column has 12 lines, 6 rows, 2 lines on each row, left and right
-  // the whole block has 16 columns, repeat
-  // condition 1: whether left or right based on divident
-  // condition 2: which row based on divided by 2
-  // draw each column first because of the animation order
-  // each column has a baseline x pos. increment line width to get respective coordinates
-
+  // still unclear. needs refactoring.
   while (counterCol < columns) {
     counterRow = 0
-    let drawRightFirst = counterCol < columns/2 ? true : false
-    let drawRightFirstIndex = drawRightFirst ? 1 : -1
+    let isleftEightColumns = counterCol < 8 ? true : false
+    let colNumber = counterCol
+    let radians = colStartingRadians[counterCol]
     while (counterRow < rows * 2) {
-      let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 2);
-      let divident = counterRow % 2;
+      let item = {}
+      let isLeftSideIndividualColumn = counterRow % 2;
+      let offsetToRight = isLeftSideIndividualColumn === 0 ? -1 : 1;
       let rowNumber = Math.floor(counterRow / 2);
-      let colNumber = counterCol
-      let xPos, yPos
-      let translateToRight = divident === 0 ? 1 : -1
-      boxGeometry.translate( translateToRight * (boxWidth/2), 0, 0 )
+      let translationsDistances = halfWidth * offsetToRight;
+      let xPos, yPos;
 
-      let cube = new THREE.Mesh(boxGeometry, material);
-
-      //  it's spanning out from the center line xpos 0
-      if (drawRightFirst) {
-        xPos = divident === 0 ? xBaseline : xBaseline + boxWidth;
-        xPos -= 3 * boxWidth * (7.5 - colNumber);
-
+      // determining left or right 8 columns, different logic tip or end
+      if (isleftEightColumns) {
+        xPos = -((7.5 - counterCol) * boxWidth + (8 - counterCol) * boxWidth * 2);
       } else {
-        xPos = divident === 0 ? xBaseline + boxWidth : xBaseline
-        xPos += 3 * boxWidth * (colNumber - 7.5);
+        xPos = (counterCol - 7.5) * boxWidth + (counterCol - 8) * boxWidth * 2;
       }
 
-      if (counterRow < 6) {
-        yPos = yBaseline + (2.5 - rowNumber) * yGap
+      // offset the mesh positions
+      xPos += isLeftSideIndividualColumn * boxWidth - translationsDistances;
+
+      // determining top or bottom 3 rows
+      if (rowNumber < 3) {
+        yPos = (3 - rowNumber) * yGap
       } else {
-        yPos = yBaseline - (rowNumber - 2.5) * yGap;
+        yPos = -(rowNumber - 3) * yGap;
       }
-      cube.position.x = xPos + drawRightFirstIndex * (translateToRight * (boxWidth / 2))
-      cube.position.y = yPos;
-      cube.position.z = 10;
-      // cube.rotation.z = 0.5
-      cube.castShadow = true;
-      scene.add(cube);
-      cubesCollection.push(cube)
+      item.xPos = xPos
+      item.yPos = yPos
+      item.radians = radians
+      item.translation = translationsDistances
+      positions.push(item)
       counterRow++;
     }
     counterCol++
   }
+  return positions
+}
 
-  // cube = new THREE.Mesh(boxGeometry, material);
-  // cube2 = new THREE.Mesh(boxGeometry, material);
-  // cube.position.x = -300;
-  // cube.position.y = 180;
-  // cube.position.z = 10;
+function drawLines (linesPositions) {
+  // console.log(linesPositions)
+  let color = new THREE.Color("yellow");
 
-  // cube2.position.x = -280;
-  // cube2.position.y = 180;
-  // cube2.position.z = 10;
-  // cube.castShadow = true;
-  // cube2.castShadow = true;
-  // scene.add(cube);
-  // scene.add(cube2);
+  let material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+  for (let i of linesPositions) {
+    let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
+    boxGeometry.translate(i.translation, 0, 0);
+    let cube = new THREE.Mesh(boxGeometry, material);
+    cube.position.x = i.xPos;
+    cube.position.y = i.yPos;
+    cube.position.z = 10
+    cube.rotation.z = i.radians
+    cube.castShadow = true
+    cubesCollection.push(cube)
+    scene.add(cube)
+  }
+}
+
+function createLines () {
+  let linesPositions = getLinesPositions()
+  drawLines(linesPositions)
 }
 
 function iniRotations() {
@@ -154,6 +281,21 @@ function iniRotations() {
   // tl.to(cube.rotation, 4, {
   //   z: "-=3.14",
   // }, 4);
+}
+
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+
+function getColStartingRadians() {
+  //  starting at 90 degrees, each column tilt 20 degrees more
+  let item = [];
+  for (let i = 0; i < 16; i++) {
+    let increment = i * 20;
+    let rad = degToRad(increment + 90);
+    item.push(rad);
+  }
+  return item;
 }
 
 function render() {
