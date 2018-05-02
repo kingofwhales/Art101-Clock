@@ -32,9 +32,13 @@ function compareOriDest (ori, dest, loopDuration, useRadians) {
   for (let i of ori) {
     let item = {}
     if (i !== dest[counter]) {
-      item.dest = dest[counter]
+      item.dest = - dest[counter]
       item.ori = i
-      item.diff = Math.abs(dest[counter] - i)
+      if (i > dest[counter]) {
+        item.diff = rotations - Math.abs(dest[counter] - i);
+      } else {
+        item.diff = Math.abs(dest[counter] - i);
+      }
       item.duration = Math.abs(dest[counter] - i) / speed
       if (counter % 2 != 0) {
         let prev = ori[counter - 1]
@@ -56,10 +60,18 @@ function compareOriDest (ori, dest, loopDuration, useRadians) {
     result.push(item)
     counter++
   }
-  console.log(result)
+  // console.log(result)
   return result
 }
 
+//  how the fuck do we rewrite this func?
+//  neg: solved by simply adding - before rotation and not messing with the original data
+//  compare the original ones without compensating 360?
+//  get shortest
+//  calc duration
+function getShortestDestsClockwise () {
+
+}
 
 // this shit will have to be refactored. impossible to understand . 0 readibility.
 function getShortestClockwiseDest(ori, dest, useRadians) {
@@ -76,6 +88,11 @@ function getShortestClockwiseDest(ori, dest, useRadians) {
     let swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
     let swapRedDest =
       commonDest >= offset ? commonDest - offset : commonDest + offset;
+
+    // console.log('swapCommonDest')
+    // console.log(swapCommonDest)
+    // console.log('swapRedDest')
+    // console.log(swapRedDest)
 
     // same rule for calculating degrees to go 
     let diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
@@ -97,6 +114,59 @@ function getShortestClockwiseDest(ori, dest, useRadians) {
   }
   return newDest
 }
+
+// work with negative and outside 360
+function getShortestClockwiseNegativeDest(ori, dest, useRadians) {
+  let length = ori.length;
+  let offset = useRadians ? -3.14159 : -180;
+  // let full = useRadians ? 6.28319 : 360
+  let i = 0;
+  let newDest = [];
+  while (i < length) {
+    let commonOri = ori[i];
+    let redOri = ori[i + 1];
+    let commonDest = dest[i];
+    let redDest = dest[i + 1];
+    let swapCommonDest =
+      redDest >= offset ? redDest - offset : redDest + offset;
+    let swapRedDest =
+      commonDest >= offset ? commonDest - offset : commonDest + offset;
+
+    // console.log("swapCommonDest");
+    // console.log(swapCommonDest);
+    // console.log("swapRedDest");
+    // console.log(swapRedDest);
+
+    // same rule for calculating degrees to go
+    let diffRegularCommon =
+      commonDest >= commonOri
+        ? commonDest - commonOri
+        : 2 * offset - (commonOri - commonDest);
+    let diffRegularRed =
+      redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
+    let diffSwapCommon =
+      swapCommonDest >= commonOri
+        ? swapCommonDest - commonOri
+        : 2 * offset - (commonOri - swapCommonDest);
+    let diffSwapRed =
+      swapRedDest >= redOri
+        ? swapRedDest - redOri
+        : 2 * offset - (redOri - swapRedDest);
+
+    let diffRegular = diffRegularCommon + diffRegularRed;
+    let diffSwap = diffSwapCommon + diffSwapRed;
+
+    if (diffSwap <= diffRegular) {
+      newDest.push(swapCommonDest);
+      newDest.push(swapRedDest);
+    } else {
+      newDest.push(commonDest);
+      newDest.push(redDest);
+    }
+    i += 2;
+  }
+  return newDest;
+}
 // function arrayPlusOne (array) {
 
 // }
@@ -105,7 +175,9 @@ export {
   degToRad,
   radToDeg,
   combine,
-  getShortestClockwiseDest
-  // compareOriDest
+  getShortestClockwiseDest,
+  getShortestClockwiseNegativeDest,
+  getShortestDestsClockwise,
+  compareOriDest
   // arrayPlusOne
 }

@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({4:[function(require,module,exports) {
+})({6:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41340,7 +41340,7 @@ exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
 exports.SceneUtils = SceneUtils;
 exports.LensFlare = LensFlare;
-},{}],6:[function(require,module,exports) {
+},{}],7:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
  * VERSION: 1.20.4
@@ -49319,7 +49319,7 @@ if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); } //necessary in case Tween
 		_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
 
 })((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenMax");
-},{}],14:[function(require,module,exports) {
+},{}],4:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -49388,9 +49388,13 @@ function compareOriDest(ori, dest, loopDuration, useRadians) {
 
       var item = {};
       if (i !== dest[counter]) {
-        item.dest = dest[counter];
+        item.dest = -dest[counter];
         item.ori = i;
-        item.diff = Math.abs(dest[counter] - i);
+        if (i > dest[counter]) {
+          item.diff = rotations - Math.abs(dest[counter] - i);
+        } else {
+          item.diff = Math.abs(dest[counter] - i);
+        }
         item.duration = Math.abs(dest[counter] - i) / speed;
         if (counter % 2 != 0) {
           var prev = ori[counter - 1];
@@ -49411,6 +49415,7 @@ function compareOriDest(ori, dest, loopDuration, useRadians) {
       result.push(item);
       counter++;
     }
+    // console.log(result)
   } catch (err) {
     _didIteratorError2 = true;
     _iteratorError2 = err;
@@ -49426,9 +49431,15 @@ function compareOriDest(ori, dest, loopDuration, useRadians) {
     }
   }
 
-  console.log(result);
   return result;
 }
+
+//  how the fuck do we rewrite this func?
+//  neg: solved by simply adding - before rotation and not messing with the original data
+//  compare the original ones without compensating 360?
+//  get shortest
+//  calc duration
+function getShortestDestsClockwise() {}
 
 // this shit will have to be refactored. impossible to understand . 0 readibility.
 function getShortestClockwiseDest(ori, dest, useRadians) {
@@ -49445,7 +49456,53 @@ function getShortestClockwiseDest(ori, dest, useRadians) {
     var swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
     var swapRedDest = commonDest >= offset ? commonDest - offset : commonDest + offset;
 
+    // console.log('swapCommonDest')
+    // console.log(swapCommonDest)
+    // console.log('swapRedDest')
+    // console.log(swapRedDest)
+
     // same rule for calculating degrees to go 
+    var diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
+    var diffRegularRed = redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
+    var diffSwapCommon = swapCommonDest >= commonOri ? swapCommonDest - commonOri : 2 * offset - (commonOri - swapCommonDest);
+    var diffSwapRed = swapRedDest >= redOri ? swapRedDest - redOri : 2 * offset - (redOri - swapRedDest);
+
+    var diffRegular = diffRegularCommon + diffRegularRed;
+    var diffSwap = diffSwapCommon + diffSwapRed;
+
+    if (diffSwap <= diffRegular) {
+      newDest.push(swapCommonDest);
+      newDest.push(swapRedDest);
+    } else {
+      newDest.push(commonDest);
+      newDest.push(redDest);
+    }
+    i += 2;
+  }
+  return newDest;
+}
+
+// work with negative and outside 360
+function getShortestClockwiseNegativeDest(ori, dest, useRadians) {
+  var length = ori.length;
+  var offset = useRadians ? -3.14159 : -180;
+  // let full = useRadians ? 6.28319 : 360
+  var i = 0;
+  var newDest = [];
+  while (i < length) {
+    var commonOri = ori[i];
+    var redOri = ori[i + 1];
+    var commonDest = dest[i];
+    var redDest = dest[i + 1];
+    var swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
+    var swapRedDest = commonDest >= offset ? commonDest - offset : commonDest + offset;
+
+    // console.log("swapCommonDest");
+    // console.log(swapCommonDest);
+    // console.log("swapRedDest");
+    // console.log(swapRedDest);
+
+    // same rule for calculating degrees to go
     var diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
     var diffRegularRed = redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
     var diffSwapCommon = swapCommonDest >= commonOri ? swapCommonDest - commonOri : 2 * offset - (commonOri - swapCommonDest);
@@ -49473,7 +49530,10 @@ exports.degToRad = degToRad;
 exports.radToDeg = radToDeg;
 exports.combine = combine;
 exports.getShortestClockwiseDest = getShortestClockwiseDest;
-},{}],13:[function(require,module,exports) {
+exports.getShortestClockwiseNegativeDest = getShortestClockwiseNegativeDest;
+exports.getShortestDestsClockwise = getShortestDestsClockwise;
+exports.compareOriDest = compareOriDest;
+},{}],3:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49592,7 +49652,7 @@ exports.getPrevTime = getPrevTime;
 exports.setPrevTime = setPrevTime;
 exports.getCurrentDisplayData = getCurrentDisplayData;
 exports.setCurrentDisplayData = setCurrentDisplayData;
-},{"./utils.js":14}],2:[function(require,module,exports) {
+},{"./utils.js":4}],2:[function(require,module,exports) {
 'use strict';
 
 var _three = require('three');
@@ -49602,6 +49662,8 @@ var THREE = _interopRequireWildcard(_three);
 var _gsap = require('gsap');
 
 var _store = require('./src/store.js');
+
+var _utils = require('./src/utils.js');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -49616,56 +49678,148 @@ var boxWidth = Math.floor(WIDTH / 70);
 var colStartingRadians = getColStartingRadians();
 
 setUp();
+attachIncrementListener();
 
 function setUp() {
   createScene();
   createLight();
   createPlane();
   createLines();
-  // iniRotations ()
+  iniRotations();
   render();
   setTimeout(function () {
     transitionToNumber();
   }, 0);
 }
 
+function attachIncrementListener() {
+  var btn = document.getElementsByClassName('increment')[0];
+  btn.addEventListener("click", function () {
+    plusOne();
+  });
+}
+
+function plusOne() {
+  console.log('plus one');
+  var date = getPlusOneTime();
+  // let array = getTimeArray(date)
+  comparePrevDest(date);
+
+  // let newData = compareOriDest(prevData.dests, data.dests);
+}
+
+function getPlusOneTime() {
+  var date = (0, _store.getPrevTime)() || new Date();
+  date.setMinutes(date.getMinutes() + 1);
+  (0, _store.setPrevTime)(date);
+  return date;
+}
+
+function comparePrevDest(date) {
+  // let array = getTimeArray(date)
+  var array = getTimeArray(new Date("Mon Apr 23 2018 12:12:43 GMT+0800 (CST)"));
+  var data = getDestsData(array, true, 360);
+  var prevData = (0, _store.getCurrentDisplayData)();
+  // console.log('-dest data-')
+  // console.log(data)
+  // console.log('-ori data-')
+  // console.log(prevData)
+  var shortestPaths = void 0;
+  if (prevData[0] < 0) {
+    shortestPaths = (0, _utils.getShortestClockwiseNegativeDest)(prevData, data, true);
+  } else {
+    shortestPaths = (0, _utils.getShortestClockwiseDest)(prevData, data, true);
+  }
+
+  var finalData = (0, _utils.compareOriDest)(prevData, shortestPaths, 8, true);
+  console.log("---prev--");
+  console.log(prevData);
+  console.log("---dest--");
+  console.log(data);
+  console.log("---shortest--");
+  console.log(shortestPaths);
+  console.log('---final--');
+  console.log(finalData);
+  // animateToTarget(shortestPaths,cubesCollection)
+  animatePartsTo(finalData, cubesCollection);
+  (0, _store.setCurrentDisplayData)(shortestPaths);
+}
+
+function getTimeArray(date) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  hours = hours < 10 ? "0" + hours : String(hours);
+  minutes = minutes < 10 ? "0" + minutes : String(minutes);
+  return (hours + minutes).split("");
+}
+
 function transitionToNumber() {
-  var currentNumber = [1, 8, 5, 6];
+  var currentNumber = [1, 2, 1, 1];
   // let currentNumber = getTimeArray(new Date())
   var data = getDestsData(currentNumber, true, 360);
-  console.log('--after processing-');
-  console.log(data);
+  // console.log('--after processing-')
+  // console.log(data)
 
   animateToTarget(data);
+  (0, _store.setCurrentDisplayData)(data);
 }
 
 function animateToTarget(target) {
   // console.log(target)
   var counter = 0;
   var delay = 0;
-  var duration = 4;
+  var duration = 2;
   var length = cubesCollection.length - 1; // because of plus two each iteration
   var tl = new _gsap.TimelineMax();
 
   while (counter < length) {
     tl.to(cubesCollection[counter].rotation, duration, {
-      z: target[counter],
+      z: -target[counter],
       ease: Power0.easeNone
     }, delay);
 
     tl.to(cubesCollection[counter + 1].rotation, duration, {
-      z: target[counter],
+      z: -target[counter],
       ease: Power0.easeNone
     }, delay);
 
     if (target[counter] !== target[counter + 1]) {
-      tl.to(cubesCollection[counter + 1].rotation, duration, {
+      tl.to(cubesCollection[counter + 1].rotation, duration / 4, {
         z: '-=1.5708',
         ease: Power0.easeNone
       }, duration + delay);
     }
     delay += 0.04;
     counter += 2;
+  }
+}
+
+function animatePartsTo(data, boxes) {
+  console.log('-data receiving--');
+  console.log(data);
+  console.log('--boxes--');
+  console.log(boxes);
+  var tl = new _gsap.TimelineMax();
+  var counter = 0;
+  var baseDelay = 0;
+  // let length = 96
+  while (counter < 191) {
+    // animate left
+    var commonRot = data[counter];
+    var redRot = data[counter + 1];
+    // console.log('--what-')
+    // console.log(commonRot)
+    tl.to(boxes[counter].rotation, commonRot.duration, {
+      z: "-=" + commonRot.diff,
+      ease: Power0.easeNone
+    }, commonRot.delay + baseDelay);
+
+    tl.to(boxes[counter + 1].rotation, redRot.duration, {
+      z: "-=" + redRot.diff,
+      ease: Power0.easeNone
+    }, redRot.delay + baseDelay);
+    counter += 2;
+    baseDelay += 0.02;
   }
 }
 
@@ -49702,7 +49856,7 @@ function getDestsData(currentNumber, useRadians, compensateDegrees) {
   data = roundedData;
 
   counterCWData = data.all.map(function (element) {
-    return -element;
+    return element;
   });
 
   // console.log("--after rounded--");
@@ -49965,7 +50119,7 @@ function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera);
 };
-},{"three":4,"gsap":6,"./src/store.js":13}],12:[function(require,module,exports) {
+},{"three":6,"gsap":7,"./src/store.js":3,"./src/utils.js":4}],8:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -49987,7 +50141,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '58701' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '50450' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -50088,5 +50242,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[12,2])
+},{}]},{},[8,2])
 //# sourceMappingURL=/dist/three-clock.map

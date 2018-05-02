@@ -2,8 +2,18 @@ import * as THREE from "three"
 import {TimelineMax} from 'gsap'
 
 import {
-  getData
+  getData,
+  getPrevTime,
+  setPrevTime,
+  getCurrentDisplayData,
+  setCurrentDisplayData
 } from './src/store.js'
+
+import {
+  getShortestClockwiseDest,
+  getShortestClockwiseNegativeDest,
+  compareOriDest
+} from "./src/utils.js";
 
 const WIDTH = window.innerWidth
 const HEIGHT = window.innerHeight
@@ -14,57 +24,159 @@ let boxWidth = Math.floor(WIDTH / 70);
 let colStartingRadians = getColStartingRadians()
 
 setUp()
+attachIncrementListener()
 
 function setUp() {
   createScene()
   createLight ()
   createPlane ()
   createLines ()
-  // iniRotations ()
+  iniRotations ()
   render()
   setTimeout(() => {
     transitionToNumber()
   }, 0)
 }
 
+function attachIncrementListener () {
+  let btn = document.getElementsByClassName('increment')[0]
+  btn.addEventListener("click", function() {
+    plusOne();
+  });
+}
+
+function plusOne () {
+  console.log('plus one')
+  let date = getPlusOneTime()
+  // let array = getTimeArray(date)
+  comparePrevDest(date)
+
+  // let newData = compareOriDest(prevData.dests, data.dests);
+
+}
+
+function getPlusOneTime () {
+  let date = getPrevTime() || new Date();
+  date.setMinutes(date.getMinutes() + 1);
+  setPrevTime(date);
+  return date
+}
+
+function comparePrevDest (date) {
+  // let array = getTimeArray(date)
+  let array = getTimeArray(new Date("Mon Apr 23 2018 12:12:43 GMT+0800 (CST)"));
+  let data = getDestsData(array, true, 360);
+  let prevData = getCurrentDisplayData();
+  // console.log('-dest data-')
+  // console.log(data)
+  // console.log('-ori data-')
+  // console.log(prevData)
+  let shortestPaths
+  if (prevData[0] < 0) {
+    shortestPaths = getShortestClockwiseNegativeDest(prevData, data, true);
+  } else {
+    shortestPaths = getShortestClockwiseDest(prevData, data, true);
+  }
+
+  let finalData = compareOriDest(prevData, shortestPaths, 8, true)
+    console.log("---prev--");
+    console.log(prevData);
+    console.log("---dest--");
+    console.log(data);
+    console.log("---shortest--");
+    console.log(shortestPaths);
+    console.log('---final--')
+    console.log(finalData)
+  // animateToTarget(shortestPaths,cubesCollection)
+  animatePartsTo(finalData, cubesCollection);
+  setCurrentDisplayData(shortestPaths)
+}
+
+function getTimeArray(date) {
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+  hours = hours < 10 ? "0" + hours : String(hours);
+  minutes = minutes < 10 ? "0" + minutes : String(minutes);
+  return (hours + minutes).split("");
+}
+
 function transitionToNumber () {
-  let currentNumber = [1, 8, 5, 6];
+  let currentNumber = [1, 2, 1, 1];
   // let currentNumber = getTimeArray(new Date())
   let data = getDestsData(currentNumber, true, 360);
-  console.log('--after processing-')
-  console.log(data)
+  // console.log('--after processing-')
+  // console.log(data)
 
   animateToTarget(data)
-
+  setCurrentDisplayData(data);
 }
 
 function animateToTarget (target) {
   // console.log(target)
   let counter = 0
   let delay = 0
-  let duration = 4
+  let duration = 2
   let length = cubesCollection.length - 1 // because of plus two each iteration
   let tl = new TimelineMax()
 
   while (counter < length) {
     tl.to(cubesCollection[counter].rotation, duration, {
-      z: target[counter],
+      z: -target[counter],
       ease: Power0.easeNone,
     }, delay);
 
     tl.to(cubesCollection[counter+1].rotation, duration, {
-      z: target[counter],
+      z: -target[counter],
       ease: Power0.easeNone
     }, delay);
 
     if (target[counter] !== target[counter+1]){
-      tl.to(cubesCollection[counter+1].rotation, duration, {
+      tl.to(cubesCollection[counter+1].rotation, duration/4, {
         z: '-=1.5708',
         ease: Power0.easeNone
       }, duration + delay);
     }
     delay += 0.04
     counter += 2
+  }
+}
+
+function animatePartsTo(data, boxes) {
+  console.log('-data receiving--')
+  console.log(data)
+  console.log('--boxes--')
+  console.log(boxes)
+  let tl = new TimelineMax();
+  let counter = 0;
+  let baseDelay = 0;
+  // let length = 96
+  while (counter < 191) {
+    // animate left
+    let commonRot = data[counter];
+    let redRot = data[counter + 1];
+    // console.log('--what-')
+    // console.log(commonRot)
+    tl.to(
+      boxes[counter].rotation,
+      commonRot.duration,
+      {
+        z: "-=" + commonRot.diff,
+        ease: Power0.easeNone
+      },
+      commonRot.delay + baseDelay
+    );
+
+    tl.to(
+      boxes[counter + 1].rotation,
+      redRot.duration,
+      {
+        z:  "-=" + redRot.diff,
+        ease: Power0.easeNone
+      },
+      redRot.delay + baseDelay
+    );
+    counter += 2;
+    baseDelay += 0.02;
   }
 }
 
@@ -102,7 +214,7 @@ function getDestsData(currentNumber, useRadians, compensateDegrees) {
   data = roundedData;
 
   counterCWData = data.all.map((element) => {
-    return -element
+    return element
   })
 
   // console.log("--after rounded--");
