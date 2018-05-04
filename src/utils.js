@@ -19,6 +19,7 @@ function combine(red, black) {
   }
   return newArray;
 }
+//  refactor shortest and compare and ...... test fully?!
 
 //  write a test first 
 function compareOriDest (ori, dest, loopDuration, useRadians) {
@@ -27,36 +28,36 @@ function compareOriDest (ori, dest, loopDuration, useRadians) {
   let rotations = useRadians ? 6.28319 : 360
   let speed = rotations / loopDuration
   let delay = loopDuration / 4
-  let difference =  useRadians ? 1.8 : 120
+  let difference =  useRadians ? 2.1 : 120
+  let length = ori.length
 
-  for (let i of ori) {
+  while (counter < length) {
     let item = {}
-    if (i !== dest[counter]) {
-      item.dest = - dest[counter]
-      item.ori = i
-      if (i > dest[counter]) {
-        item.diff = rotations - Math.abs(dest[counter] - i);
-      } else {
-        item.diff = Math.abs(dest[counter] - i);
-      }
-      item.duration = Math.abs(dest[counter] - i) / speed
-      if (counter % 2 != 0) {
-        let prev = ori[counter - 1]
-        let current = i
-        if (Math.abs(current - prev) >= difference) {
-          item.delay = delay
-        } else {
-          item.delay = 0
-        }
-
-      } else {
-        item.delay = 0 
-      }
+    item.dest = dest[counter]
+    item.ori = ori[counter]
+    let tempDiff
+    if (ori[counter] > dest[counter]) {
+      tempDiff = rotations - Math.abs(dest[counter] - ori[counter]);
     } else {
-      item.delay = 0
-      item.duration = 0
-      item.diff = 0
+      tempDiff = Math.abs(dest[counter] - ori[counter]);
     }
+    item.diff = tempDiff
+    item.duration = tempDiff / speed
+
+    let current, prev, whetherStraight
+    if (counter % 2 === 0) {
+      item.delay = 0
+    } else {
+      current = ori[counter] + rotations / 2;
+      prev = ori[counter - 1]
+      whetherStraight = Math.abs((Math.abs(current - prev) - rotations / 2))
+      if (whetherStraight < 0.1) {
+        item.delay = 0
+      } else {
+        item.delay = delay
+      }
+    }
+
     result.push(item)
     counter++
   }
@@ -74,99 +75,45 @@ function getShortestDestsClockwise () {
 }
 
 // this shit will have to be refactored. impossible to understand . 0 readibility.
-function getShortestClockwiseDest(ori, dest, useRadians) {
-  let length = ori.length;
+function getShortestClockwiseDest(originals, destinations, useRadians) {
+  let length = originals.length;
   let offset = useRadians ? 3.14159 : 180;
   // let full = useRadians ? 6.28319 : 360
   let i = 0
-  let newDest = [];
+  let newDestination = [];
   while (i < length) {
-    let commonOri = ori[i];
-    let redOri = ori[i + 1];
-    let commonDest = dest[i];
-    let redDest = dest[i + 1];
-    let swapCommonDest = redDest >= offset ? redDest - offset : redDest + offset;
-    let swapRedDest =
-      commonDest >= offset ? commonDest - offset : commonDest + offset;
+    let leftOriginal = originals[i];
+    let rightOriginal = originals[i + 1];
+    let leftDestination = destinations[i];
+    let rightDestination = destinations[i + 1];
 
-    // console.log('swapCommonDest')
-    // console.log(swapCommonDest)
-    // console.log('swapRedDest')
-    // console.log(swapRedDest)
+    // alternative routes to go to destinations
+    let swapLeftDestination = rightDestination >= offset ? rightDestination - offset : rightDestination + offset;
+    let swapRightDestination =
+      leftDestination >= offset ? leftDestination - offset : leftDestination + offset;
 
     // same rule for calculating degrees to go 
-    let diffRegularCommon = commonDest >= commonOri ? commonDest - commonOri : 2 * offset - (commonOri - commonDest);
-    let diffRegularRed = redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
-    let diffSwapCommon = swapCommonDest >= commonOri ? swapCommonDest - commonOri : 2 * offset - (commonOri - swapCommonDest);
-    let diffSwapRed = swapRedDest >= redOri ? swapRedDest - redOri : 2 * offset - (redOri - swapRedDest);
-
+    let diffRegularCommon = leftDestination >= leftOriginal ? leftDestination - leftOriginal : 2 * offset - (leftOriginal - leftDestination);
+    let diffRegularRed = rightDestination >= rightOriginal ? rightDestination - rightOriginal : 2 * offset - (rightOriginal - rightDestination);
+    let diffSwapCommon = swapLeftDestination >= leftOriginal ? swapLeftDestination - leftOriginal : 2 * offset - (leftOriginal - swapLeftDestination);
+    let diffSwapRed = swapRightDestination >= rightOriginal ? swapRightDestination - rightOriginal : 2 * offset - (rightOriginal - swapRightDestination);
     let diffRegular = diffRegularCommon + diffRegularRed
     let diffSwap = diffSwapCommon + diffSwapRed
 
-    if (diffSwap <= diffRegular) {
-      newDest.push(swapCommonDest);
-      newDest.push(swapRedDest);
+    if (diffSwap < diffRegular) {
+      newDestination.push(swapLeftDestination);
+      newDestination.push(swapRightDestination);
     } else {
-      newDest.push(commonDest);
-      newDest.push(redDest);
+      newDestination.push(leftDestination);
+      newDestination.push(rightDestination);
     }
     i += 2;
   }
-  return newDest
+  return newDestination
 }
 
 // work with negative and outside 360
-function getShortestClockwiseNegativeDest(ori, dest, useRadians) {
-  let length = ori.length;
-  let offset = useRadians ? -3.14159 : -180;
-  // let full = useRadians ? 6.28319 : 360
-  let i = 0;
-  let newDest = [];
-  while (i < length) {
-    let commonOri = ori[i];
-    let redOri = ori[i + 1];
-    let commonDest = dest[i];
-    let redDest = dest[i + 1];
-    let swapCommonDest =
-      redDest >= offset ? redDest - offset : redDest + offset;
-    let swapRedDest =
-      commonDest >= offset ? commonDest - offset : commonDest + offset;
 
-    // console.log("swapCommonDest");
-    // console.log(swapCommonDest);
-    // console.log("swapRedDest");
-    // console.log(swapRedDest);
-
-    // same rule for calculating degrees to go
-    let diffRegularCommon =
-      commonDest >= commonOri
-        ? commonDest - commonOri
-        : 2 * offset - (commonOri - commonDest);
-    let diffRegularRed =
-      redDest >= redOri ? redDest - redOri : 2 * offset - (redOri - redDest);
-    let diffSwapCommon =
-      swapCommonDest >= commonOri
-        ? swapCommonDest - commonOri
-        : 2 * offset - (commonOri - swapCommonDest);
-    let diffSwapRed =
-      swapRedDest >= redOri
-        ? swapRedDest - redOri
-        : 2 * offset - (redOri - swapRedDest);
-
-    let diffRegular = diffRegularCommon + diffRegularRed;
-    let diffSwap = diffSwapCommon + diffSwapRed;
-
-    if (diffSwap <= diffRegular) {
-      newDest.push(swapCommonDest);
-      newDest.push(swapRedDest);
-    } else {
-      newDest.push(commonDest);
-      newDest.push(redDest);
-    }
-    i += 2;
-  }
-  return newDest;
-}
 // function arrayPlusOne (array) {
 
 // }
@@ -176,8 +123,6 @@ export {
   radToDeg,
   combine,
   getShortestClockwiseDest,
-  getShortestClockwiseNegativeDest,
-  getShortestDestsClockwise,
   compareOriDest
   // arrayPlusOne
 }

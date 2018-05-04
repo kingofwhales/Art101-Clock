@@ -4,7 +4,7 @@ import {
   combine,
   arrayPlusOne,
   getShortestClockwiseDest,
-  getShortestDestsClockwise
+  compareOriDest
 } from "../src/utils.js";
 
 describe("Combine two arrays in an one by one order", function() {
@@ -27,43 +27,6 @@ describe("Combine two arrays in an one by one order", function() {
   });
 })
 
-// describe("Negative: compare arrays of destinations and original points", () => {
-//   describe("provided dests and origins, use degrees ", () => {
-//     it("should be shortest paths", () => {
-//       let ori = [-135, -135];
-//       let dest = [-90, -180];
-//       let shortestDest = [-0, -270];
-//       expect(getShortestClockwiseDest(ori, dest, false)).to.eql(shortestDest);
-//     });
-//   });
-// });
-
-describe("compare arrays of destinations and original points", () => {
-  describe("provided dests and origins, use degrees ", () => {
-    it("should be shortest paths", () => {
-      let ori = [-135, -135];
-      let dest = [-90, -180];
-      let shortestDest = [-0, -270];
-      expect(getShortestClockwiseDest(ori, dest, false)).to.eql(shortestDest);
-    });
-  });
-  describe("provided negative dests and origins, use degrees ", () => {
-    it("should be shortest paths", () => {
-      let ori = [-135, -135];
-      let dest = [-90, -180];
-      let shortestDest = [-0, -270];
-      expect(getShortestClockwiseDest(ori, dest, false)).to.eql(shortestDest);
-    });
-  });
-  describe("provided bigger than 360 dests and origins, use degrees ", () => {
-    it("should be shortest paths", () => {
-      let ori = [-135, -135];
-      let dest = [-90, -180];
-      let shortestDest = [-0, -270];
-      expect(getShortestClockwiseDest(ori, dest, false)).to.eql(shortestDest);
-    });
-  });
-});
 
 // describe("compare arrays of destinations and original points", () => {
 //   describe("provided dests and origins, use degrees ", () => {
@@ -107,3 +70,22 @@ describe("compare arrays of destinations and original points", () => {
 //     });
 //   });
 // })
+
+
+describe("compare originals and destinations", () => {
+  describe("generate right delay duration speed etc ", () => {
+    it("should be right", () => {
+      let ori = [1.5708, 3.1416, 6.2832, 1.5708, 1.5708, 3.1416]
+      let dest = [4.7124, 4.7124, 4.7124, 4.7124, 1.5708, 3.1416]
+      let result = [
+        {dest: 4.7124, ori: 1.5708, diff: 3.1415999999999995, duration: 4.000006366192968, delay: 0},
+        {dest: 4.7124, ori: 3.1416, diff: 1.5707999999999998, duration: 2.000003183096484, delay: 2},
+        {dest: 4.7124, ori: 6.2832, diff: 4.71239, duration: 5.999996816903516, delay: 0} ,
+        {dest: 4.7124, ori: 1.5708, diff: 3.1415999999999995, duration: 4.000006366192968, delay: 2},
+        {dest: 1.5708, ori: 1.5708, diff: 0, duration: 0, delay: 0},
+        {dest: 3.1416, ori: 3.1416, diff: 0, duration: 0, delay: 2}
+      ];
+      expect(compareOriDest(ori, dest, 8, true)).to.eql(result);
+    });
+  });
+});

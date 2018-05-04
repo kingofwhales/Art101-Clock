@@ -23,8 +23,56 @@ let cubesCollection = []
 let boxWidth = Math.floor(WIDTH / 70);
 let colStartingRadians = getColStartingRadians()
 
+const ONE_MINUTE = 60000
+let delay = 4000
+
 setUp()
 attachIncrementListener()
+setTimeout(() => {
+  repeatEvery(updateToCurrentTime, ONE_MINUTE);
+  // setInterval(updateToCurrentTime, ONE_MINUTE);
+}, delay * 3 )
+
+
+var hidden, visibilityChange;
+let isTabActive = true
+
+if (typeof document.hidden !== "undefined") {
+  // Opera 12.10 and Firefox 18 and later support
+  hidden = "hidden";
+  visibilityChange = "visibilitychange";
+} else if (typeof document.msHidden !== "undefined") {
+  hidden = "msHidden";
+  visibilityChange = "msvisibilitychange";
+} else if (typeof document.webkitHidden !== "undefined") {
+  hidden = "webkitHidden";
+  visibilityChange = "webkitvisibilitychange";
+}
+
+
+// If the page is hidden, pause the video;
+// if the page is shown, play the video
+function handleVisibilityChange() {
+  if (document[hidden]) {
+    isTabActive = false
+  } else {
+    isTabActive = true
+    checkTimeCorrect();
+  }
+}
+
+// Warn if the browser doesn't support addEventListener or the Page Visibility API
+if (
+  typeof document.addEventListener === "undefined" ||
+  typeof document.hidden === "undefined"
+) {
+  console.log(
+    "This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API."
+  );
+} else {
+  // Handle page visibility change
+  document.addEventListener(visibilityChange, handleVisibilityChange, false);
+}
 
 function setUp() {
   createScene()
@@ -35,14 +83,67 @@ function setUp() {
   render()
   setTimeout(() => {
     transitionToNumber()
-  }, 0)
+  }, delay)
 }
 
 function attachIncrementListener () {
   let btn = document.getElementsByClassName('increment')[0]
   btn.addEventListener("click", function() {
-    plusOne();
+    if (!tl.isActive()) {
+      console.log('-not active-')
+      plusOne();
+    } else {
+      console.log('-active-')
+    }
   });
+}
+
+function toggleButtonVisibility () {
+  let btn = document.getElementsByClassName("increment")[0];
+  let tl = new TimelineMax()
+  tl.to(btn, 2, {
+    opacity:0
+  })
+}
+
+function checkTimeCorrect () {
+  console.log('--checking--')
+  let date = new Date();
+  let prevTime = getPrevTime()
+  console.log(tl.isActive());
+  console.log(date)
+  console.log(prevTime)
+  if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())){
+    console.log('-check time correct-')
+    setPrevTime(date);
+    comparePrevDest(date);
+  }
+}
+
+
+
+function updateToCurrentTime () {
+  // only run when not active
+  // let date = new Date();
+  // let prevTime = getPrevTime()
+  // let sameTime = false
+  // // // console.log('--running interval func---')
+
+  // if (date.getHours() === prevTime.getHours() && date.getMinutes()=== prevTime.getMinutes()){
+  //   // console.log('--same time--')
+  //   // console.log(date.getHours());
+  //   // console.log(date.getMinutes());
+  //   // console.log(prevTime.getHours());
+  //   // console.log(prevTime.getMinutes());
+  //   sameTime = true
+  // }
+  // if (!tl.isActive() && !sameTime && isTabActive) {
+  if (!tl.isActive() && isTabActive) {
+    console.log("---actually updating---");
+    let date = new Date();
+    setPrevTime(date);
+    comparePrevDest(date);
+  }
 }
 
 function plusOne () {
@@ -62,10 +163,12 @@ function getPlusOneTime () {
   return date
 }
 
+// updates hourly and disable button before animation done?
+
 function comparePrevDest (date) {
-  // let array = getTimeArray(date)
-  let array = getTimeArray(new Date("Mon Apr 23 2018 12:12:43 GMT+0800 (CST)"));
-  let data = getDestsData(array, true, 360);
+  let array = getTimeArray(date)
+  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"));
+  let data = getDestsData(array, true, 0);
   let prevData = getCurrentDisplayData();
   // console.log('-dest data-')
   // console.log(data)
@@ -78,18 +181,18 @@ function comparePrevDest (date) {
     shortestPaths = getShortestClockwiseDest(prevData, data, true);
   }
 
-  let finalData = compareOriDest(prevData, shortestPaths, 8, true)
-    console.log("---prev--");
-    console.log(prevData);
-    console.log("---dest--");
-    console.log(data);
-    console.log("---shortest--");
-    console.log(shortestPaths);
-    console.log('---final--')
-    console.log(finalData)
+  let finalData = compareOriDest(prevData, data, 8, true)
+    // console.log("---prev--");
+    // console.log(prevData);
+    // console.log("---dest--");
+    // console.log(data);
+    // console.log("---shortest--");
+    // console.log(shortestPaths);
+    // console.log('---final--')
+    // console.log(finalData)
   // animateToTarget(shortestPaths,cubesCollection)
   animatePartsTo(finalData, cubesCollection);
-  setCurrentDisplayData(shortestPaths)
+  setCurrentDisplayData(data)
 }
 
 function getTimeArray(date) {
@@ -101,9 +204,11 @@ function getTimeArray(date) {
 }
 
 function transitionToNumber () {
-  let currentNumber = [1, 2, 1, 1];
-  // let currentNumber = getTimeArray(new Date())
-  let data = getDestsData(currentNumber, true, 360);
+  // let currentNumber = [1, 2, 1, 2];
+  let current = new Date()
+  let currentNumber = getTimeArray(current)
+  setPrevTime(current)
+  let data = getDestsData(currentNumber, true, 0);
   // console.log('--after processing-')
   // console.log(data)
 
@@ -111,22 +216,30 @@ function transitionToNumber () {
   setCurrentDisplayData(data);
 }
 
+let tl
+
 function animateToTarget (target) {
   // console.log(target)
   let counter = 0
   let delay = 0
   let duration = 2
   let length = cubesCollection.length - 1 // because of plus two each iteration
-  let tl = new TimelineMax()
+  tl = new TimelineMax()
 
   while (counter < length) {
     tl.to(cubesCollection[counter].rotation, duration, {
-      z: -target[counter],
+      directionalRotation: {
+        z: -target[counter] + "_ccw",  
+        useRadians: true 
+      },
       ease: Power0.easeNone,
     }, delay);
 
     tl.to(cubesCollection[counter+1].rotation, duration, {
-      z: -target[counter],
+      directionalRotation: {
+        z: -target[counter] + "_ccw",  
+        useRadians: true 
+      },
       ease: Power0.easeNone
     }, delay);
 
@@ -142,11 +255,11 @@ function animateToTarget (target) {
 }
 
 function animatePartsTo(data, boxes) {
-  console.log('-data receiving--')
-  console.log(data)
-  console.log('--boxes--')
-  console.log(boxes)
-  let tl = new TimelineMax();
+  // console.log('-data receiving--')
+  // console.log(data)
+  // console.log('--boxes--')
+  // console.log(boxes)
+  tl = new TimelineMax();
   let counter = 0;
   let baseDelay = 0;
   // let length = 96
@@ -154,13 +267,25 @@ function animatePartsTo(data, boxes) {
     // animate left
     let commonRot = data[counter];
     let redRot = data[counter + 1];
+
+    if (commonRot === undefined) {
+      console.log("--found you---");
+      console.log(counter)
+    }
+    if (redRot === undefined) {
+      console.log("--found you you ---");
+      console.log(counter)
+    }
     // console.log('--what-')
     // console.log(commonRot)
     tl.to(
       boxes[counter].rotation,
       commonRot.duration,
       {
-        z: "-=" + commonRot.diff,
+        directionalRotation: {
+          z: -commonRot.dest + "_ccw",  
+          useRadians: true 
+        },
         ease: Power0.easeNone
       },
       commonRot.delay + baseDelay
@@ -170,7 +295,10 @@ function animatePartsTo(data, boxes) {
       boxes[counter + 1].rotation,
       redRot.duration,
       {
-        z:  "-=" + redRot.diff,
+        directionalRotation: {
+          z: -redRot.dest + "_ccw",  
+          useRadians: true 
+        },
         ease: Power0.easeNone
       },
       redRot.delay + baseDelay
@@ -178,6 +306,22 @@ function animatePartsTo(data, boxes) {
     counter += 2;
     baseDelay += 0.02;
   }
+}
+
+function repeatEvery(func, interval) {
+  // Check current time and calculate the delay until next interval
+  var now = new Date(),
+    delay = interval - now % interval;
+
+  function start() {
+    // Execute function now...
+    func();
+    // ... and every interval
+    setInterval(func, interval);
+  }
+
+  // Delay execution until it's an even interval
+  setTimeout(start, delay);
 }
 
 function getDestsData(currentNumber, useRadians, compensateDegrees) {
@@ -194,7 +338,7 @@ function getDestsData(currentNumber, useRadians, compensateDegrees) {
   //  if compenstated by degrees
   if (compensateDegrees) {
     for (let i in data) {
-      compData[i] = compensateDegreesBy(data[i], 360);
+      compData[i] = compensateDegreesBy(data[i], compensateDegrees);
     }
     data = compData;
   }
@@ -245,7 +389,7 @@ function flattenData(data) {
 
 function compensateDegreesBy(data, deg) {
   return data.map(element => {
-    return element + 360;
+    return element + deg;
   });
 }
 
@@ -353,6 +497,8 @@ function getLinesPositions () {
 
 function drawLines (linesPositions) {
   // console.log(linesPositions)
+  // console.log('-iiinitial pos-')
+  // console.log(linesPositions)
   let color = new THREE.Color("yellow");
 
   let material = new THREE.MeshLambertMaterial({ color: color.getHex() });
@@ -378,8 +524,9 @@ function createLines () {
 function iniRotations() {
   let tl = new TimelineMax();
   for (let i of cubesCollection) {
-    tl.to(i.rotation, 8, {
-      z: "-=6.28",
+    tl.to(i.rotation, 2, {
+      // the actual z will always be from 0 -> -6.28
+      z: "-=6.28319",
       ease: Power0.easeNone,
       repeat: -1
     }, 0);
@@ -403,8 +550,9 @@ function getColStartingRadians() {
   //  starting at 90 degrees, each column tilt 20 degrees more
   let item = [];
   for (let i = 0; i < 16; i++) {
-    let increment = i * 20;
-    let rad = degToRad(increment + 90);
+    let increment = (i * 20) + 90;
+    let rad = degToRad(increment);
+    // rad = 1
     item.push(rad);
   }
   return item;
