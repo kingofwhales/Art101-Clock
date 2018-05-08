@@ -49605,25 +49605,187 @@ var _utils = require('./src/utils.js');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var WIDTH = window.innerWidth;
-var HEIGHT = window.innerHeight;
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var scene = void 0,
-    renderer = void 0,
-    camera = void 0;
+// how do i refactor?
+// what's my methodology? that is tested against failures
+// 1. readability: if you can't understan the code in 3 seconds/ or you are more than 20 lines .etc, refactor it.
+// 2. structure: if you can't immediately tell what's in this module, refactor it.
+// 3. testability: can i trust you ?  Write the test first, rather than the implementation first?
+// 4. scalability: in what way will you grow? can you grow easily?
+
+// Do I understand you?
+// Do I trust you?
+// Can I find you?
+// Can I grow you?
+
+// start along with how the program proceed....
+// first step users visit...
+
+var width = window.innerWidth;
+var height = window.innerHeight;
+var scene = new THREE.Scene();
+var renderer = new THREE.WebGLRenderer({ antialias: true });
+var camera = new THREE.PerspectiveCamera(70, width / height, 0.001, 1500);
+
 var cubesCollection = [];
-var boxWidth = Math.floor(WIDTH / 70);
-var colStartingRadians = getColStartingRadians();
-
-var ONE_MINUTE = 60000;
-var delay = 4000;
+var boxWidth = Math.floor(width / 70);
+var linesPositions = getLinesPositions(); //6 rows, 16 columns
 
 setUp();
-attachIncrementListener();
-setTimeout(function () {
-  repeatEvery(updateToCurrentTime, ONE_MINUTE);
-  // setInterval(updateToCurrentTime, ONE_MINUTE);
-}, delay * 3);
+
+function setUp() {
+  createScene();
+  createLight();
+  createPlane();
+  createLines();
+  render();
+}
+
+function createScene() {
+  renderer.setSize(width, height);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.setClearColor(0xffffff, 1);
+  document.body.appendChild(renderer.domElement);
+  camera.position.z = 500;
+  scene.add(camera);
+}
+
+function createLight() {
+  var light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
+  light.position.set(0, 200, 300);
+  light.castShadow = true;
+  light.shadow.mapSize.width = 4096;
+  light.shadow.mapSize.height = 4096;
+  scene.add(light);
+}
+
+function createPlane() {
+  var planeGeometry = new THREE.PlaneBufferGeometry(width, height);
+  var planeMaterial = new THREE.MeshPhongMaterial({
+    color: 0x00dddd,
+    flatShading: THREE.FlatShading
+  });
+  var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  plane.receiveShadow = true;
+  plane.position.z = 0;
+  plane.position.x = 0;
+  plane.position.y = 0;
+  scene.add(plane);
+}
+
+function createLines() {
+  var color = new THREE.Color("yellow");
+  var material = new THREE.MeshLambertMaterial({ color: color.getHex() });
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = linesPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var i = _step.value;
+
+      var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
+      boxGeometry.translate(i.translation, 0, 0);
+      var cube = new THREE.Mesh(boxGeometry, material);
+      cube.position.x = i.xPos;
+      cube.position.y = i.yPos;
+      cube.position.z = 10;
+      cube.rotation.z = i.radians;
+      cube.castShadow = true;
+      cubesCollection.push(cube);
+      scene.add(cube);
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+}
+
+function render() {
+  requestAnimationFrame(render);
+  renderer.render(scene, camera);
+}
+
+function getLinesPositions() {
+  var positions = [];
+  var columns = 16;
+  var colStartingRadians = getColStartingRadians(columns);
+  // full length divided by two
+  var xLeftestPos = -(columns * 2 * boxWidth + (columns - 1) * boxWidth) / 2;
+  var counterCol = 0;
+  while (counterCol < columns) {
+    // baseline for this column starting x
+    var columnBaseline = xLeftestPos + counterCol * 3 * boxWidth;
+    var colCurrentRadians = colStartingRadians[counterCol];
+    var positionsForThisColumn = generatePositionsForThisColumn(columnBaseline, colCurrentRadians);
+    positions.push.apply(positions, _toConsumableArray(positionsForThisColumn));
+    counterCol++;
+  }
+  return positions;
+}
+
+function generatePositionsForThisColumn(columnBaseline, colCurrentRadians) {
+  var positionsForThisColumn = [];
+  var rows = 6;
+  var units = rows * 2;
+  var yGap = Math.floor(height / 12);
+  // box height is so small that it won't be included
+  var yTopPos = 2.5 * yGap;
+  var counter = 0;
+  while (counter < units) {
+    var item = {};
+    var offsetToRight = counter % 2 === 0 ? -1 : 1;
+    var xPos = columnBaseline + counter % 2 * boxWidth - offsetToRight * boxWidth / 2;
+    var level = Math.floor(counter / 2);
+    var translationsDistances = boxWidth / 2 * offsetToRight;
+    var yPos = yTopPos - level * yGap;
+    item.xPos = xPos;
+    item.yPos = yPos;
+    item.radians = colCurrentRadians;
+    item.translation = translationsDistances;
+    positionsForThisColumn.push(item);
+    counter++;
+  }
+  return positionsForThisColumn;
+}
+
+function getColStartingRadians(colNum) {
+  //  starting at 90 degrees, each column tilt 20 degrees more
+  var item = [];
+  for (var i = 0; i < colNum; i++) {
+    var increment = i * 20 + 90;
+    var rad = degToRad(increment);
+    // rad = 1
+    item.push(rad);
+  }
+  return item;
+}
+
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+
+// const oneMinute = 60000
+// const delay = 4000
+
+// attachIncrementListener()
+// setTimeout(() => {
+//   repeatEvery(updateToCurrentTime, ONE_MINUTE)
+//   // setInterval(updateToCurrentTime, ONE_MINUTE)
+// }, DELAY * 3 )
+
 
 var hidden, visibilityChange;
 var isTabActive = true;
@@ -49640,7 +49802,7 @@ if (typeof document.hidden !== "undefined") {
   visibilityChange = "webkitvisibilitychange";
 }
 
-// If the page is hidden, pause the video;
+// If the page is hidden, pause the video
 // if the page is shown, play the video
 function handleVisibilityChange() {
   if (document[hidden]) {
@@ -49656,19 +49818,7 @@ if (typeof document.addEventListener === "undefined" || typeof document.hidden =
   console.log("This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API.");
 } else {
   // Handle page visibility change
-  document.addEventListener(visibilityChange, handleVisibilityChange, false);
-}
-
-function setUp() {
-  createScene();
-  createLight();
-  createPlane();
-  createLines();
-  iniRotations();
-  render();
-  setTimeout(function () {
-    transitionToNumber();
-  }, delay);
+  // document.addEventListener(visibilityChange, handleVisibilityChange, false)
 }
 
 function attachIncrementListener() {
@@ -49695,11 +49845,11 @@ function checkTimeCorrect() {
   console.log('--checking--');
   var date = new Date();
   var prevTime = (0, _store.getPrevTime)();
-  console.log(tl.isActive());
-  console.log(date);
-  console.log(prevTime);
+  // console.log(tl.isActive())
+  // console.log(date)
+  // console.log(prevTime)
   if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())) {
-    console.log('-check time correct-');
+    // console.log('-check time correct-')
     (0, _store.setPrevTime)(date);
     comparePrevDest(date);
   }
@@ -49707,22 +49857,22 @@ function checkTimeCorrect() {
 
 function updateToCurrentTime() {
   // only run when not active
-  // let date = new Date();
+  // let date = new Date()
   // let prevTime = getPrevTime()
   // let sameTime = false
   // // // console.log('--running interval func---')
 
   // if (date.getHours() === prevTime.getHours() && date.getMinutes()=== prevTime.getMinutes()){
   //   // console.log('--same time--')
-  //   // console.log(date.getHours());
-  //   // console.log(date.getMinutes());
-  //   // console.log(prevTime.getHours());
-  //   // console.log(prevTime.getMinutes());
+  //   // console.log(date.getHours())
+  //   // console.log(date.getMinutes())
+  //   // console.log(prevTime.getHours())
+  //   // console.log(prevTime.getMinutes())
   //   sameTime = true
   // }
   // if (!tl.isActive() && !sameTime && isTabActive) {
   if (!tl.isActive() && isTabActive) {
-    console.log("---actually updating---");
+    // console.log("---actually updating---")
     var date = new Date();
     (0, _store.setPrevTime)(date);
     comparePrevDest(date);
@@ -49735,7 +49885,7 @@ function plusOne() {
   // let array = getTimeArray(date)
   comparePrevDest(date);
 
-  // let newData = compareOriDest(prevData.dests, data.dests);
+  // let newData = compareOriDest(prevData.dests, data.dests)
 }
 
 function getPlusOneTime() {
@@ -49749,7 +49899,7 @@ function getPlusOneTime() {
 
 function comparePrevDest(date) {
   var array = getTimeArray(date);
-  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"));
+  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
   var data = getDestsData(array, true, 0);
   var prevData = (0, _store.getCurrentDisplayData)();
   // console.log('-dest data-')
@@ -49764,12 +49914,12 @@ function comparePrevDest(date) {
   }
 
   var finalData = (0, _utils.compareOriDest)(prevData, data, 8, true);
-  // console.log("---prev--");
-  // console.log(prevData);
-  // console.log("---dest--");
-  // console.log(data);
-  // console.log("---shortest--");
-  // console.log(shortestPaths);
+  // console.log("---prev--")
+  // console.log(prevData)
+  // console.log("---dest--")
+  // console.log(data)
+  // console.log("---shortest--")
+  // console.log(shortestPaths)
   // console.log('---final--')
   // console.log(finalData)
   // animateToTarget(shortestPaths,cubesCollection)
@@ -49786,7 +49936,7 @@ function getTimeArray(date) {
 }
 
 function transitionToNumber() {
-  // let currentNumber = [1, 2, 1, 2];
+  // let currentNumber = [1, 2, 1, 2]
   var current = new Date();
   var currentNumber = getTimeArray(current);
   (0, _store.setPrevTime)(current);
@@ -49898,8 +50048,8 @@ function repeatEvery(func, interval) {
 
 function getDestsData(currentNumber, useRadians, compensateDegrees) {
   var data = (0, _store.getData)(currentNumber);
-  // console.log("--before flat--");
-  // console.log(data);
+  // console.log("--before flat--")
+  // console.log(data)
   // flatten four into one
   data = flattenData(data);
   var radData = {};
@@ -49932,8 +50082,8 @@ function getDestsData(currentNumber, useRadians, compensateDegrees) {
     return element;
   });
 
-  // console.log("--after rounded--");
-  // console.log(data);
+  // console.log("--after rounded--")
+  // console.log(data)
 
   return counterCWData;
 }
@@ -49950,29 +50100,29 @@ function flattenData(data) {
     left: [],
     all: []
   };
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
 
   try {
-    for (var _iterator = data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var i = _step.value;
+    for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
 
       newArray.right = newArray.right.concat(i.right);
       newArray.left = newArray.left.concat(i.left);
       newArray.all = newArray.all.concat(i.all);
     }
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
       }
     } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
+      if (_didIteratorError2) {
+        throw _iteratorError2;
       }
     }
   }
@@ -49990,148 +50140,6 @@ function convertToRad(data) {
   return data.map(function (element) {
     return degToRad(element);
   });
-}
-
-function createScene() {
-  scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(WIDTH, HEIGHT);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.setClearColor(0xffffff, 1);
-  document.body.appendChild(renderer.domElement);
-
-  camera = new THREE.PerspectiveCamera(70, WIDTH / HEIGHT, 0.001, 1500);
-  camera.position.z = 500;
-  scene.add(camera);
-}
-
-function createLight() {
-  var light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
-  light.position.set(0, 200, 300);
-  light.castShadow = true;
-  light.shadow.mapSize.width = 4096;
-  light.shadow.mapSize.height = 4096;
-  scene.add(light);
-
-  // let light2 = new THREE.AmbientLight(0xb3e053, 1); // soft white light
-  // scene.add(light2);
-}
-
-function createPlane() {
-  var planeGeometry = new THREE.PlaneBufferGeometry(WIDTH, HEIGHT);
-  var planeMaterial = new THREE.MeshPhongMaterial({
-    color: 0x00dddd,
-    // specular: 0xe888b6,
-    // shininess: 10,
-    flatShading: THREE.FlatShading
-  });
-  var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-  plane.receiveShadow = true;
-  plane.position.z = 0;
-  plane.position.x = 0;
-  plane.position.y = 0;
-  scene.add(plane);
-}
-
-function getLinesPositions() {
-  var positions = [];
-  var counterRow = 0;
-  var counterCol = 0;
-  var rows = 6;
-  var columns = 16;
-  var yGap = Math.floor(HEIGHT / 12);
-  var xGap = boxWidth;
-  var halfWidth = boxWidth / 2;
-
-  // still unclear. needs refactoring.
-  while (counterCol < columns) {
-    counterRow = 0;
-    var isleftEightColumns = counterCol < 8 ? true : false;
-    var colNumber = counterCol;
-    var radians = colStartingRadians[counterCol];
-    while (counterRow < rows * 2) {
-      var item = {};
-      var isLeftSideIndividualColumn = counterRow % 2;
-      var offsetToRight = isLeftSideIndividualColumn === 0 ? -1 : 1;
-      var rowNumber = Math.floor(counterRow / 2);
-      var translationsDistances = halfWidth * offsetToRight;
-      var xPos = void 0,
-          yPos = void 0;
-
-      // determining left or right 8 columns, different logic tip or end
-      if (isleftEightColumns) {
-        xPos = -((7.5 - counterCol) * boxWidth + (8 - counterCol) * boxWidth * 2);
-      } else {
-        xPos = (counterCol - 7.5) * boxWidth + (counterCol - 8) * boxWidth * 2;
-      }
-
-      // offset the mesh positions
-      xPos += isLeftSideIndividualColumn * boxWidth - translationsDistances;
-
-      // determining top or bottom 3 rows
-      if (rowNumber < 3) {
-        yPos = (3 - rowNumber) * yGap;
-      } else {
-        yPos = -(rowNumber - 3) * yGap;
-      }
-      item.xPos = xPos;
-      item.yPos = yPos;
-      item.radians = radians;
-      item.translation = translationsDistances;
-      positions.push(item);
-      counterRow++;
-    }
-    counterCol++;
-  }
-  return positions;
-}
-
-function drawLines(linesPositions) {
-  // console.log(linesPositions)
-  // console.log('-iiinitial pos-')
-  // console.log(linesPositions)
-  var color = new THREE.Color("yellow");
-
-  var material = new THREE.MeshLambertMaterial({ color: color.getHex() });
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = linesPositions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var i = _step2.value;
-
-      var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
-      boxGeometry.translate(i.translation, 0, 0);
-      var cube = new THREE.Mesh(boxGeometry, material);
-      cube.position.x = i.xPos;
-      cube.position.y = i.yPos;
-      cube.position.z = 10;
-      cube.rotation.z = i.radians;
-      cube.castShadow = true;
-      cubesCollection.push(cube);
-      scene.add(cube);
-    }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
-}
-
-function createLines() {
-  var linesPositions = getLinesPositions();
-  drawLines(linesPositions);
 }
 
 function iniRotations() {
@@ -50155,11 +50163,11 @@ function iniRotations() {
     //   z: "-=6.28",
     //   ease: Power0.easeNone,
     //   repeat: -1
-    // }, 0);
+    // }, 0)
 
     // tl.to(cube.rotation, 4, {
     //   z: "-=3.14",
-    // }, 4);
+    // }, 4)
   } catch (err) {
     _didIteratorError3 = true;
     _iteratorError3 = err;
@@ -50175,28 +50183,7 @@ function iniRotations() {
     }
   }
 }
-
-function degToRad(deg) {
-  return deg * Math.PI / 180;
-}
-
-function getColStartingRadians() {
-  //  starting at 90 degrees, each column tilt 20 degrees more
-  var item = [];
-  for (var i = 0; i < 16; i++) {
-    var increment = i * 20 + 90;
-    var rad = degToRad(increment);
-    // rad = 1
-    item.push(rad);
-  }
-  return item;
-}
-
-function render() {
-  requestAnimationFrame(render);
-  renderer.render(scene, camera);
-};
-},{"three":6,"gsap":7,"./src/store.js":3,"./src/utils.js":4}],22:[function(require,module,exports) {
+},{"three":6,"gsap":7,"./src/store.js":3,"./src/utils.js":4}],27:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50319,5 +50306,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[22,2])
+},{}]},{},[27,2])
 //# sourceMappingURL=/dist/three-clock.map
