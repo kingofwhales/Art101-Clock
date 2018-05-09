@@ -1,6 +1,25 @@
-function degToRad(deg) {
-  return deg * Math.PI / 180;
+
+
+// this is pure and predictable with the same arguments
+function getColStartingRadians(colNum) {
+  //  starting at 90 degrees, each column tilt 20 degrees more
+  let item = []
+  for (let i = 0; i < colNum; i++) {
+    let increment = i * 20 + 90
+    let rad = degToRad(increment)
+    // rad = 1
+    item.push(rad)
+  }
+  return item
 }
+
+
+// utilities
+// this is pure and predictable
+function degToRad(deg) {
+  return deg * Math.PI / 180
+}
+
 
 function radToDeg(rad) {
   return rad * 180 / Math.PI;
@@ -119,10 +138,11 @@ function getShortestClockwiseDest(originals, destinations, useRadians) {
 // }
 
 export {
-  degToRad,
   radToDeg,
   combine,
   getShortestClockwiseDest,
-  compareOriDest
+  compareOriDest,
+  getColStartingRadians,
+  degToRad
   // arrayPlusOne
 }

@@ -4,6 +4,16 @@ import {
 
 let time, currentDisplayData
 
+const cubesCollection = []
+
+function getCubesCollections () {
+  return cubesCollection
+}
+
+function updateCubesCollection (dataArray) {
+  return cubesCollection.push(...dataArray)
+}
+
 function getCurrentDisplayData () {
   return currentDisplayData
 }
@@ -684,5 +694,7 @@ export {
   getPrevTime,
   setPrevTime,
   getCurrentDisplayData,
-  setCurrentDisplayData
+  setCurrentDisplayData,
+  updateCubesCollection,
+  getCubesCollections
 }
