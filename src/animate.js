@@ -1,5 +1,5 @@
 import {
-  getCubesCollections,
+  getBoxesCollections,
   getData,
   getPrevTime,
   setPrevTime,
@@ -8,19 +8,24 @@ import {
 } from "./store.js";
 
 import {
-  degToRad
+  degToRad,
+  getTimeArray
 } from './utils.js'
 
 const initialDuration = 8;
-const transitionToDuration = 6
+const transitionToDuration = 4
 const transitionToDelay = 0.08;
 const transitionToSpeed = Math.PI * 2 / transitionToDuration
-const cubesCollection = getCubesCollections()
+const boxesCollection = getBoxesCollections()
 
+function iniRotations () {
+  startLoopingRotations(boxesCollection)
+}
+// unit checked R-2
 // animations
-function iniRotations() {
-  let tl = new TimelineMax();
-  for (let i of cubesCollection) {
+function startLoopingRotations(boxesCollection) {
+  const tl = new TimelineMax();
+  for (const i of boxesCollection) {
     tl.to(
       i.rotation,
       initialDuration,
@@ -35,102 +40,113 @@ function iniRotations() {
   }
 }
 
-// this is a high level function that starts the transition to number process
-// first it get current time
-// converts it into array
-// then it gets data from that latest time array
-// then it animate to that target based on the data
-// during this process, we also updates the states
-// by updating the latest time and current display data in the store
-
+// unit checked R-3
 function transitionToNumber() {
-
   const current = new Date();
   const currentTimeArray = getTimeArray(current);
-  const pureData = getDestsData(currentTimeArray, true, 0);
-  const destinationData = generateDestinationsData(pureData)
-  // console.log(destinationData)
-  // animateToDestination(destinationData, cubesCollection);
-  animateToTarget(pureData)
+  const pureData = getDestsData(currentTimeArray);
+  const transformedData  = transformDataStructureForTransitionTo(pureData)
+  const transformedCollections = transformCollectionsStructureForTransitionTo(boxesCollection)
+  // console.log('-before transform-')
+  // console.log(pureData)
+  // console.log('-after transform-')
+  // console.log(transformedData)
+  const finalData = generateDestinationsData(transformedData)
+  console.log('-after final-')
+  console.log(finalData)
+  animateToGoal(finalData, transformedCollections)
+  // animateToTarget(pureData, boxesCollection)
+
   setPrevTime(current);
   setCurrentDisplayData(pureData);
 }
+function transformDataStructureForTransitionTo (data) {
+  // because of how transitionToNumber transition the elements
+  // left, left, right.  left left right. etc
+  // We are modifying the structure to make the animate func more readable
+  return data.reduce((accu, value, index) => {
+    if (index % 2 === 0) {
+      accu.push(value, value)
+    } else {
+      accu.push(value)
+    }
+    return accu
+  }, [])
+}
 
-// function getLatestTimeArray () {
-//   // let currentNumber = [1, 2, 1, 2]
-//   const current = new Date();
-//   const currentTimeArray = getTimeArray(current);
-//   return currentTimeArray
-// }
+function transformCollectionsStructureForTransitionTo(data) {
+  // because of how transitionToNumber transition the elements
+  // left, left, right.  left left right. etc
+  // We are modifying the structure to make the animate func more readable
+  return data.reduce((accu, value, index) => {
+    if (index % 2 === 0) {
+      accu.push(value)
+    } else {
+      accu.push(value, value)
+    }
+    return accu
+  }, [])
+}
+
+function animateToGoal (data, collections) {
+  const tl = new TimelineMax()
+  data.forEach((element, index) => {
+    const duration = element.duration
+    const delay = element.delay
+    const destination = element.destination
+    tl.to(collections[index].rotation, duration,
+      {
+        directionalRotation: {
+          z: - destination + "_ccw",
+          useRadians: true
+        },
+        ease: Power0.easeNone
+      }, delay
+    )
+  })
+}
 
 function generateDestinationsData (data) {
+  let rootDelay = 0
   return data.map((element, index, array) => {
+    let delay = rootDelay
     const destination = element
-    const isSecondHalfBox = index % 2 === 1 ?  true : false
+    const isSecondHalfBox = index % 3 === 2 ?  true : false
     const firstHalfBoxDestination = array[index - 1];
     let duration, turn90More
     if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-      duration = Math.PI / 2 / transitionToSpeed + transitionToDuration
       turn90More = true
+      duration = transitionToDuration / 4
     } else {
-      duration = transitionToDuration
       turn90More = false
+      duration = transitionToDuration
+    }
+
+    if (isSecondHalfBox === true) {
+      delay += transitionToDuration
+      rootDelay += transitionToDelay
     }
 
     return {
       destination,
       duration,
+      delay,
       turn90More,
       isSecondHalfBox
     }
   })
 }
-
-// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
-function animateToDestination(data, target) {
-  const tl = new TimelineMax()
-  let delay = 0
-  data.forEach((element, index, array) => {
-    const {destination, duration, turn90More, isSecondHalfBox} = element
-    // let firstStopDestination
-    // if (isSecondHalfBox) {
-    //   firstStopDestination = array[index - 1]
-    // }
-
-    tl.to(target[index].rotation, duration, {
-      directionalRotation: {
-        z: -destination + "_ccw",
-        useRadians: true
-      },
-      ease: Power0.easeNone
-    }, delay)
-
-    // if (turn90More) {
-    //   tl.to(target[index].rotation, transitionToDuration/4, {
-    //     directionalRotation: {
-    //       z: -destination + "_ccw",
-    //       useRadians: true
-    //     },
-    //     ease: Power0.easeNone
-    //   }, delay)
-    // }
-    if (isSecondHalfBox) {
-      delay += transitionToDelay
-    }
-  })
-}
-
-
-function animateToTarget(target) {
-  console.log(target)
-  const length = cubesCollection.length - 1; // because of plus two each iteration
+// CAN THIS REALLY BE REFACTORED? 
+function animateToTarget(target, boxesCollection) {
+  // console.log(target)
+  const length = boxesCollection.length - 1; // because of plus two each iteration
   const tl = new TimelineMax();
 
   let counter = 0;
   let delay = 0
   while (counter < length) {
     tl.to(
-      cubesCollection[counter].rotation,
+      boxesCollection[counter].rotation,
       transitionToDuration,
       {
         directionalRotation: {
@@ -143,7 +159,7 @@ function animateToTarget(target) {
     );
 
     tl.to(
-      cubesCollection[counter + 1].rotation,
+      boxesCollection[counter + 1].rotation,
       transitionToDuration,
       {
         directionalRotation: {
@@ -156,10 +172,8 @@ function animateToTarget(target) {
     );
 
     if (target[counter] !== target[counter + 1]) {
-      // console.log('-yeah-')
-      // console.log(-target[counter+1] + "_ccw");
       tl.to(
-        cubesCollection[counter + 1].rotation,
+        boxesCollection[counter + 1].rotation,
         transitionToDuration / 4,
         {
           directionalRotation: {
@@ -230,87 +244,48 @@ function animatePartsTo(data, boxes) {
   }
 }
 
-function getDestsData(currentNumber, useRadians, compensateDegrees) {
-  let data = getData(currentNumber);
-  // console.log("--before flat--")
-  // console.log(data)
-  // flatten four into one
-  data = flattenData(data);
-  let radData = {};
-  let compData = {};
-  let roundedData = {};
-  let counterCWData = [];
-
-  //  if compenstated by degrees
-  if (compensateDegrees) {
-    for (let i in data) {
-      compData[i] = compensateDegreesBy(data[i], compensateDegrees);
-    }
-    data = compData;
-  }
-
-  //  if return one converted to radians
-  if (useRadians) {
-    for (let i in data) {
-      radData[i] = convertToRad(data[i]);
-    }
-    data = radData;
-  }
-
-  for (let i in data) {
-    roundedData[i] = roundToFourDecimals(data[i]);
-  }
-  data = roundedData;
-
-  counterCWData = data.all.map(element => {
-    return element;
-  });
-
-  // console.log("--after rounded--")
-  // console.log(data)
-
-  return counterCWData;
+// unit cheked R-3
+function getDestsData(currentNumber) {
+  let data
+  data = getData()
+  data = extractNumberAllData(currentNumber, data)
+  data = flattenData(data)
+  data = convertToRad(data)
+  data = roundToFourDecimals(data);
+  return data
 }
 
+// unit cheked R-3
+function extractNumberAllData (array, data) {
+  return [
+    data[array[0]].all,
+    data[array[1]].all,
+    data[array[2]].all,
+    data[array[3]].all
+  ]
+}
+
+// unit cheked R-3
 function roundToFourDecimals(data) {
   return data.map(element => {
     return Math.round(element * 10000) / 10000;
   });
 }
 
+// unit cheked R-3
 function flattenData(data) {
-  let newArray = {
-    right: [],
-    left: [],
-    all: []
-  };
-  for (let i of data) {
-    newArray.right = newArray.right.concat(i.right);
-    newArray.left = newArray.left.concat(i.left);
-    newArray.all = newArray.all.concat(i.all);
-  }
-  return newArray;
+  return data.reduce((accu, value) => {
+    return accu.concat(value)
+  }, [])
 }
 
-function compensateDegreesBy(data, deg) {
-  return data.map(element => {
-    return element + deg;
-  });
-}
-
+// unit cheked R-3
 function convertToRad(data) {
   return data.map(element => {
     return degToRad(element);
   });
 }
 
-function getTimeArray(date) {
-  let hours = date.getHours();
-  let minutes = date.getMinutes();
-  hours = hours < 10 ? "0" + hours : String(hours);
-  minutes = minutes < 10 ? "0" + minutes : String(minutes);
-  return (hours + minutes).split("");
-}
 
 
 
@@ -319,3 +294,84 @@ export {
   iniRotations,
   transitionToNumber
 }
+
+
+
+// function getLatestTimeArray () {
+//   // let currentNumber = [1, 2, 1, 2]
+//   const current = new Date();
+//   const currentTimeArray = getTimeArray(current);
+//   return currentTimeArray
+// }
+
+// function generateDestinationsData (data) {
+//   return data.map((element, index, array) => {
+//     const destination = element
+//     const isSecondHalfBox = index % 2 === 1 ?  true : false
+//     const firstHalfBoxDestination = array[index - 1];
+//     let duration, turn90More
+//     if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
+//       duration = Math.PI / 2 / transitionToSpeed + transitionToDuration
+//       turn90More = true
+//     } else {
+//       duration = transitionToDuration
+//       turn90More = false
+//     }
+
+//     return {
+//       destination,
+//       duration,
+//       turn90More,
+//       isSecondHalfBox
+//     }
+//   })
+// }
+
+// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
+// function animateToDestination(data, target) {
+//   const tl = new TimelineMax()
+//   let delay = 0
+//   data.forEach((element, index, array) => {
+//     const {destination, duration, turn90More, isSecondHalfBox} = element
+//     // let firstStopDestination
+//     // if (isSecondHalfBox) {
+//     //   firstStopDestination = array[index - 1]
+//     // }
+
+//     tl.to(target[index].rotation, duration, {
+//       directionalRotation: {
+//         z: -destination + "_ccw",
+//         useRadians: true
+//       },
+//       ease: Power0.easeNone
+//     }, delay)
+
+//     // if (turn90More) {
+//     //   tl.to(target[index].rotation, transitionToDuration/4, {
+//     //     directionalRotation: {
+//     //       z: -destination + "_ccw",
+//     //       useRadians: true
+//     //     },
+//     //     ease: Power0.easeNone
+//     //   }, delay)
+//     // }
+//     if (isSecondHalfBox) {
+//       delay += transitionToDelay
+//     }
+//   })
+// }
+
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+
+
+// this is a high level function that starts the transition to number process
+// first it get current time
+// converts it into array
+// then it gets data from that latest time array
+// then it animate to that target based on the data
+// during this process, we also updates the states
+// by updating the latest time and current display data in the store

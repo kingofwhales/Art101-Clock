@@ -1,32 +1,41 @@
 import * as THREE from "three"
 
 import {
-  updateCubesCollection
+  updateBoxesCollection
 } from './store.js'
 
 import {
-  getLinesPositions
+  getBoxesPositions,
+  getBoxesPositionsAlt
 } from './notSure.js'
 
+// ????????unsure section
+// ????????unsure section
+// ????????unsure section
 const width = window.innerWidth;
 const height = window.innerHeight;
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const camera = new THREE.PerspectiveCamera(70, width / height, 0.001, 1500);
-const cubesCollection = [];
 const boxWidth = Math.floor(width / 70)
-const columns = 16
-const linesPositions = getLinesPositions(boxWidth, columns) //6 rows, 16 columns
+const yGap = Math.floor(height / 12)
 
+const rows = 6
+const columns = 16
+const boxesPositions = getBoxesPositionsAlt(boxWidth, yGap, rows, columns)
+
+
+// unit checked
 function setUp() {
   createScene();
   createLight();
   createPlane();
-  createLines();
+  const boxesCollection = createBoxes();
+  updateBoxesCollection(boxesCollection);
   render();
-  updateCubesCollection(cubesCollection);
 }
 
+// unit checked
 function createScene() {
   renderer.setSize(width, height);
   renderer.shadowMap.enabled = true;
@@ -37,6 +46,7 @@ function createScene() {
   scene.add(camera);
 }
 
+// unit checked
 function createLight() {
   const light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
   light.position.set(0, 200, 300);
@@ -46,6 +56,7 @@ function createLight() {
   scene.add(light);
 }
 
+// unit checked
 function createPlane() {
   const planeGeometry = new THREE.PlaneBufferGeometry(width, height);
   const planeMaterial = new THREE.MeshPhongMaterial({
@@ -60,27 +71,31 @@ function createPlane() {
   scene.add(plane);
 }
 
-function createLines() {
+// unit checked
+function createBoxes() {
+  const boxesCollection = []
   const color = new THREE.Color("yellow");
   const material = new THREE.MeshLambertMaterial({
     color: color.getHex()
     // transparent: true,
     // opacity: 0.2
   });
-  for (let i of linesPositions) {
-    let boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
+  for (const i of boxesPositions) {
+    const boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
     boxGeometry.translate(i.translation, 0, 0);
-    let cube = new THREE.Mesh(boxGeometry, material);
+    const cube = new THREE.Mesh(boxGeometry, material);
     cube.position.x = i.xPos;
     cube.position.y = i.yPos;
     cube.position.z = 10;
     cube.rotation.z = i.radians;
     cube.castShadow = true;
-    cubesCollection.push(cube);
+    boxesCollection.push(cube);
     scene.add(cube);
   }
+  return boxesCollection
 }
 
+// unit checked
 function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera);

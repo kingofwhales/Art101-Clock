@@ -18,12 +18,110 @@ import {
 } from "./src/utils.js"
 
 
+// import {
+//   prepareForUpdates
+// } from './src/update.js'
 
 
 const masterTimeline = new TimelineMax()
 masterTimeline.add(setUp, 0);
 masterTimeline.add(iniRotations, 2)
 masterTimeline.add(transitionToNumber, 3)
+// masterTimeline.add("transitionToNumberEnd")
+// masterTimeline.add(prepareForUpdates)
+
+
+function prepareForUpdates() {
+  // installVisibilityListener();
+  // checkUpdateEveryMinute();
+}
+
+function installVisibilityListener() {
+  let hidden, visibilityChange;
+  let isTabActive = true;
+
+  if (typeof document.hidden !== "undefined") {
+    // Opera 12.10 and Firefox 18 and later support
+    hidden = "hidden";
+    visibilityChange = "visibilitychange";
+  } else if (typeof document.msHidden !== "undefined") {
+    hidden = "msHidden";
+    visibilityChange = "msvisibilitychange";
+  } else if (typeof document.webkitHidden !== "undefined") {
+    hidden = "webkitHidden";
+    visibilityChange = "webkitvisibilitychange";
+  }
+
+  // Warn if the browser doesn't support addEventListener or the Page Visibility API
+  if (
+    typeof document.addEventListener === "undefined" ||
+    typeof document.hidden === "undefined"
+  ) {
+    console.log(
+      "This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API."
+    );
+  } else {
+    // Handle page visibility change
+    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+  }
+}
+
+function handleVisibilityChange() {
+  if (document[hidden]) {
+    isTabActive = false;
+  } else {
+    isTabActive = true;
+    checkTimeCorrect();
+  }
+}
+
+function checkTimeCorrect() {
+  console.log("--checking--");
+  let date = new Date();
+  let prevTime = getPrevTime();
+  // console.log(tl.isActive())
+  // console.log(date)
+  // console.log(prevTime)
+  if (
+    !tl.isActive() &&
+    (date.getHours() !== prevTime.getHours() ||
+      date.getMinutes() !== prevTime.getMinutes())
+  ) {
+    // console.log('-check time correct-')
+    setPrevTime(date);
+    comparePrevDest(date);
+  }
+}
+
+function comparePrevDest(date) {
+  let array = getTimeArray(date);
+  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
+  let data = getDestsData(array, true, 0);
+  let prevData = getCurrentDisplayData();
+  // console.log('-dest data-')
+  // console.log(data)
+  // console.log('-ori data-')
+  // console.log(prevData)
+  let shortestPaths;
+  if (prevData[0] < 0) {
+    shortestPaths = getShortestClockwiseNegativeDest(prevData, data, true);
+  } else {
+    shortestPaths = getShortestClockwiseDest(prevData, data, true);
+  }
+
+  let finalData = compareOriDest(prevData, data, 8, true);
+  // console.log("---prev--")
+  // console.log(prevData)
+  // console.log("---dest--")
+  // console.log(data)
+  // console.log("---shortest--")
+  // console.log(shortestPaths)
+  // console.log('---final--')
+  // console.log(finalData)
+  // animateToTarget(shortestPaths,cubesCollection)
+  animatePartsTo(finalData, cubesCollection);
+  setCurrentDisplayData(data);
+}
 
 
 // we are at refactoring transtiontonumber structure.
@@ -59,45 +157,7 @@ masterTimeline.add(transitionToNumber, 3)
 // }, DELAY * 3 )
 
 
-var hidden, visibilityChange
-let isTabActive = true
 
-if (typeof document.hidden !== "undefined") {
-  // Opera 12.10 and Firefox 18 and later support
-  hidden = "hidden"
-  visibilityChange = "visibilitychange"
-} else if (typeof document.msHidden !== "undefined") {
-  hidden = "msHidden"
-  visibilityChange = "msvisibilitychange"
-} else if (typeof document.webkitHidden !== "undefined") {
-  hidden = "webkitHidden"
-  visibilityChange = "webkitvisibilitychange"
-}
-
-
-// If the page is hidden, pause the video
-// if the page is shown, play the video
-function handleVisibilityChange() {
-  if (document[hidden]) {
-    isTabActive = false
-  } else {
-    isTabActive = true
-    checkTimeCorrect()
-  }
-}
-
-// Warn if the browser doesn't support addEventListener or the Page Visibility API
-if (
-  typeof document.addEventListener === "undefined" ||
-  typeof document.hidden === "undefined"
-) {
-  console.log(
-    "This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API."
-  )
-} else {
-  // Handle page visibility change
-  // document.addEventListener(visibilityChange, handleVisibilityChange, false)
-}
 
 
 function attachIncrementListener () {
@@ -120,19 +180,7 @@ function toggleButtonVisibility () {
   })
 }
 
-function checkTimeCorrect () {
-  console.log('--checking--')
-  let date = new Date()
-  let prevTime = getPrevTime()
-  // console.log(tl.isActive())
-  // console.log(date)
-  // console.log(prevTime)
-  if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())){
-    // console.log('-check time correct-')
-    setPrevTime(date)
-    comparePrevDest(date)
-  }
-}
+
 
 
 
@@ -179,35 +227,7 @@ function getPlusOneTime () {
 
 // updates hourly and disable button before animation done?
 
-function comparePrevDest (date) {
-  let array = getTimeArray(date)
-  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
-  let data = getDestsData(array, true, 0)
-  let prevData = getCurrentDisplayData()
-  // console.log('-dest data-')
-  // console.log(data)
-  // console.log('-ori data-')
-  // console.log(prevData)
-  let shortestPaths
-  if (prevData[0] < 0) {
-    shortestPaths = getShortestClockwiseNegativeDest(prevData, data, true)
-  } else {
-    shortestPaths = getShortestClockwiseDest(prevData, data, true)
-  }
 
-  let finalData = compareOriDest(prevData, data, 8, true)
-    // console.log("---prev--")
-    // console.log(prevData)
-    // console.log("---dest--")
-    // console.log(data)
-    // console.log("---shortest--")
-    // console.log(shortestPaths)
-    // console.log('---final--')
-    // console.log(finalData)
-  // animateToTarget(shortestPaths,cubesCollection)
-  animatePartsTo(finalData, cubesCollection)
-  setCurrentDisplayData(data)
-}
 
 
 

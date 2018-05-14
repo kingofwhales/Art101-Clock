@@ -3,16 +3,24 @@
 // this is pure and predictable with the same arguments
 function getColStartingRadians(colNum) {
   //  starting at 90 degrees, each column tilt 20 degrees more
-  let item = []
+  const item = []
   for (let i = 0; i < colNum; i++) {
-    let increment = i * 20 + 90
-    let rad = degToRad(increment)
-    // rad = 1
+    const increment = i * 20 + 90
+    const rad = degToRad(increment)
     item.push(rad)
   }
   return item
 }
-
+// unit checked R-2
+// unit tested T-3
+// + much faster than .concat
+function getTimeArray(date) {
+  let hours = date.getHours()
+  let minutes = date.getMinutes()
+  hours = hours < 10 ? "0" + String(hours) : String(hours)
+  minutes = minutes < 10 ? "0" + String(minutes) : String(minutes)
+  return (hours + minutes).split("")
+}
 
 // utilities
 // this is pure and predictable
@@ -143,6 +151,7 @@ export {
   getShortestClockwiseDest,
   compareOriDest,
   getColStartingRadians,
-  degToRad
+  degToRad,
+  getTimeArray
   // arrayPlusOne
 }

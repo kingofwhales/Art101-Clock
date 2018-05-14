@@ -49334,10 +49334,19 @@ function getColStartingRadians(colNum) {
   for (var i = 0; i < colNum; i++) {
     var increment = i * 20 + 90;
     var rad = degToRad(increment);
-    // rad = 1
     item.push(rad);
   }
   return item;
+}
+// unit checked R-2
+// unit tested T-3
+// + much faster than .concat
+function getTimeArray(date) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  hours = hours < 10 ? "0" + String(hours) : String(hours);
+  minutes = minutes < 10 ? "0" + String(minutes) : String(minutes);
+  return (hours + minutes).split("");
 }
 
 // utilities
@@ -49489,13 +49498,14 @@ exports.getShortestClockwiseDest = getShortestClockwiseDest;
 exports.compareOriDest = compareOriDest;
 exports.getColStartingRadians = getColStartingRadians;
 exports.degToRad = degToRad;
+exports.getTimeArray = getTimeArray;
 },{}],6:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getCubesCollections = exports.updateCubesCollection = exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
+exports.getBoxesCollections = exports.updateBoxesCollection = exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
 
 var _utils = require('./utils.js');
 
@@ -49504,14 +49514,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 var time = void 0,
     currentDisplayData = void 0;
 
-var cubesCollection = [];
+var boxesCollection = [];
 
-function getCubesCollections() {
-  return cubesCollection;
+function getBoxesCollections() {
+  return boxesCollection;
 }
 
-function updateCubesCollection(dataArray) {
-  return cubesCollection.push.apply(cubesCollection, _toConsumableArray(dataArray));
+function updateBoxesCollection(dataArray) {
+  return boxesCollection.push.apply(boxesCollection, _toConsumableArray(dataArray));
 }
 
 function getCurrentDisplayData() {
@@ -49611,8 +49621,8 @@ var data = [
   right: redlineDestForNine
 }];
 
-function getData(currentNumber) {
-  return [data[currentNumber[0]], data[currentNumber[1]], data[currentNumber[2]], data[currentNumber[3]]];
+function getData() {
+  return data;
 }
 
 exports.getData = getData;
@@ -49620,68 +49630,97 @@ exports.getPrevTime = getPrevTime;
 exports.setPrevTime = setPrevTime;
 exports.getCurrentDisplayData = getCurrentDisplayData;
 exports.setCurrentDisplayData = setCurrentDisplayData;
-exports.updateCubesCollection = updateCubesCollection;
-exports.getCubesCollections = getCubesCollections;
+exports.updateBoxesCollection = updateBoxesCollection;
+exports.getBoxesCollections = getBoxesCollections;
 },{"./utils.js":5}],14:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getLinesPositions = undefined;
+exports.getBoxesPositionsAlt = undefined;
 
 var _utils = require('./utils.js');
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-// for putting not so sure functions
-// this could be turned pure
-// colstarting radians, height, boxWidth, columns number, rows number
-function getLinesPositions(boxWidth, columns) {
+// unit checked R-3
+// unit tested  T-3
+// much better after refactoring. but still pretty bad: 32 lines
+function getBoxesPositionsAlt(boxWidth, yGap, rows, columns) {
   var positions = [];
-  // pure this line will always be consistent with the same input
   var colStartingRadians = (0, _utils.getColStartingRadians)(columns);
-  // full length divided by two
-  var xLeftestPos = -(columns * 2 * boxWidth + (columns - 1) * boxWidth) / 2;
-  var counterCol = 0;
-  while (counterCol < columns) {
-    // baseline for this column starting x
-    var columnBaseline = xLeftestPos + counterCol * 3 * boxWidth;
-    var colCurrentRadians = colStartingRadians[counterCol];
-    var positionsForThisColumn = generatePositionsForThisColumn(columnBaseline, colCurrentRadians, boxWidth);
-    positions.push.apply(positions, _toConsumableArray(positionsForThisColumn));
-    counterCol++;
+  var unitsPerColumns = rows * 2;
+  var totalUnits = columns * unitsPerColumns;
+  var xLeftestPos = -(columns * 2 * boxWidth + (columns - 1) * boxWidth) / 2 + 1 / 2 * boxWidth;
+  var yTopPos = (rows - 1) / 2 * yGap;
+  var counter = 0;
+  while (counter < totalUnits) {
+    var columnNumber = Math.floor(counter / unitsPerColumns);
+    var unitNumberInCurrentColumn = counter % unitsPerColumns;
+    var dividend = unitNumberInCurrentColumn % 2;
+    var rowNumber = Math.floor(unitNumberInCurrentColumn / 2);
+    var currentColumnRadians = colStartingRadians[columnNumber];
+    var offsetToRight = dividend === 0 ? -1 : 1;
+    var translationsDistances = boxWidth / 2;
+    var translationsVector = translationsDistances * offsetToRight;
+    var xPos = xLeftestPos + dividend * boxWidth + columnNumber * 3 * boxWidth - translationsVector;
+    var yPos = yTopPos - rowNumber * yGap;
+    positions.push({
+      xPos: xPos,
+      yPos: yPos,
+      translation: translationsVector,
+      radians: currentColumnRadians
+    });
+    counter++;
   }
   return positions;
 }
 
-function generatePositionsForThisColumn(columnBaseline, colCurrentRadians, boxWidth) {
-  var positionsForThisColumn = [];
-  var height = window.innerHeight;
-  var rows = 6;
-  var units = rows * 2;
-  // box height is so small that it won't be included
-  var yGap = Math.floor(height / 12);
-  var yTopPos = 2.5 * yGap;
-  var counter = 0;
-  while (counter < units) {
-    var item = {};
-    var offsetToRight = counter % 2 === 0 ? -1 : 1;
-    var xPos = columnBaseline + counter % 2 * boxWidth - offsetToRight * boxWidth / 2;
-    var level = Math.floor(counter / 2);
-    var translationsDistances = boxWidth / 2 * offsetToRight;
-    var yPos = yTopPos - level * yGap;
-    item.xPos = xPos;
-    item.yPos = yPos;
-    item.radians = colCurrentRadians;
-    item.translation = translationsDistances;
-    positionsForThisColumn.push(item);
-    counter++;
-  }
-  return positionsForThisColumn;
-}
+// // unit checked. R-3
+// function getBoxesPositions(boxWidth, yGap, columns) {
+//   const positions = []
+//   // pure this line will always be consistent with the same input
+//   const colStartingRadians = getColStartingRadians(columns)
+//   // full length divided by two
+//   const xLeftestPos = -(columns * 2 * boxWidth + (columns - 1) * boxWidth) / 2
+//   let counterCol = 0
+//   while (counterCol < columns) {
+//     // baseline for this column starting x
+//     const columnBaseline = xLeftestPos + counterCol * 3 * boxWidth
+//     const colCurrentRadians = colStartingRadians[counterCol]
+//     const positionsForThisColumn = generatePositionsForThisColumn(columnBaseline, colCurrentRadians, boxWidth, yGap)
+//     positions.push(...positionsForThisColumn)
+//     counterCol++
+//   }
+//   console.log('-old-')
+//   console.log(positions)
+//   return positions
+// }
 
-exports.getLinesPositions = getLinesPositions;
+// function generatePositionsForThisColumn(columnBaseline, colCurrentRadians, boxWidth, yGap) {
+//   const positionsForThisColumn = []
+//   const rows = 6
+//   const units = rows * 2
+//   // box height is so small that it won't be included
+//   const yTopPos = 2.5 * yGap
+//   let counter = 0
+//   while (counter < units) {
+//     const item = {}
+//     const offsetToRight = counter % 2 === 0 ? -1 : 1
+//     const xPos = columnBaseline + (counter % 2) * boxWidth - offsetToRight * boxWidth / 2
+//     const level = Math.floor(counter / 2)
+//     const translationsDistances = (boxWidth / 2) * offsetToRight
+//     const yPos = yTopPos - level * yGap
+//     item.xPos = xPos
+//     item.yPos = yPos
+//     item.radians = colCurrentRadians
+//     item.translation = translationsDistances
+//     positionsForThisColumn.push(item)
+//     counter++
+//   }
+//   return positionsForThisColumn
+// }
+
+exports.getBoxesPositionsAlt = getBoxesPositionsAlt;
 },{"./utils.js":5}],4:[function(require,module,exports) {
 'use strict';
 
@@ -49700,25 +49739,32 @@ var _notSure = require('./notSure.js');
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+// ????????unsure section
+// ????????unsure section
+// ????????unsure section
 var width = window.innerWidth;
 var height = window.innerHeight;
 var scene = new THREE.Scene();
 var renderer = new THREE.WebGLRenderer({ antialias: true });
 var camera = new THREE.PerspectiveCamera(70, width / height, 0.001, 1500);
-var cubesCollection = [];
 var boxWidth = Math.floor(width / 70);
-var columns = 16;
-var linesPositions = (0, _notSure.getLinesPositions)(boxWidth, columns); //6 rows, 16 columns
+var yGap = Math.floor(height / 12);
 
+var rows = 6;
+var columns = 16;
+var boxesPositions = (0, _notSure.getBoxesPositionsAlt)(boxWidth, yGap, rows, columns);
+
+// unit checked
 function setUp() {
   createScene();
   createLight();
   createPlane();
-  createLines();
+  var boxesCollection = createBoxes();
+  (0, _store.updateBoxesCollection)(boxesCollection);
   render();
-  (0, _store.updateCubesCollection)(cubesCollection);
 }
 
+// unit checked
 function createScene() {
   renderer.setSize(width, height);
   renderer.shadowMap.enabled = true;
@@ -49729,6 +49775,7 @@ function createScene() {
   scene.add(camera);
 }
 
+// unit checked
 function createLight() {
   var light = new THREE.SpotLight(0xed3332, 3, 6000, 2);
   light.position.set(0, 200, 300);
@@ -49738,6 +49785,7 @@ function createLight() {
   scene.add(light);
 }
 
+// unit checked
 function createPlane() {
   var planeGeometry = new THREE.PlaneBufferGeometry(width, height);
   var planeMaterial = new THREE.MeshPhongMaterial({
@@ -49752,7 +49800,9 @@ function createPlane() {
   scene.add(plane);
 }
 
-function createLines() {
+// unit checked
+function createBoxes() {
+  var boxesCollection = [];
   var color = new THREE.Color("yellow");
   var material = new THREE.MeshLambertMaterial({
     color: color.getHex()
@@ -49764,7 +49814,7 @@ function createLines() {
   var _iteratorError = undefined;
 
   try {
-    for (var _iterator = linesPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (var _iterator = boxesPositions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var i = _step.value;
 
       var boxGeometry = new THREE.BoxBufferGeometry(boxWidth, 4, 1);
@@ -49775,7 +49825,7 @@ function createLines() {
       cube.position.z = 10;
       cube.rotation.z = i.radians;
       cube.castShadow = true;
-      cubesCollection.push(cube);
+      boxesCollection.push(cube);
       scene.add(cube);
     }
   } catch (err) {
@@ -49792,8 +49842,11 @@ function createLines() {
       }
     }
   }
+
+  return boxesCollection;
 }
 
+// unit checked
 function render() {
   requestAnimationFrame(render);
   renderer.render(scene, camera);
@@ -49813,20 +49866,24 @@ var _store = require("./store.js");
 var _utils = require("./utils.js");
 
 var initialDuration = 8;
-var transitionToDuration = 6;
+var transitionToDuration = 4;
 var transitionToDelay = 0.08;
 var transitionToSpeed = Math.PI * 2 / transitionToDuration;
-var cubesCollection = (0, _store.getCubesCollections)();
+var boxesCollection = (0, _store.getBoxesCollections)();
 
-// animations
 function iniRotations() {
+  startLoopingRotations(boxesCollection);
+}
+// unit checked R-2
+// animations
+function startLoopingRotations(boxesCollection) {
   var tl = new TimelineMax();
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
 
   try {
-    for (var _iterator = cubesCollection[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (var _iterator = boxesCollection[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var i = _step.value;
 
       tl.to(i.rotation, initialDuration, {
@@ -49852,104 +49909,111 @@ function iniRotations() {
   }
 }
 
-// this is a high level function that starts the transition to number process
-// first it get current time
-// converts it into array
-// then it gets data from that latest time array
-// then it animate to that target based on the data
-// during this process, we also updates the states
-// by updating the latest time and current display data in the store
-
+// unit checked R-3
 function transitionToNumber() {
-
   var current = new Date();
-  var currentTimeArray = getTimeArray(current);
-  var pureData = getDestsData(currentTimeArray, true, 0);
-  var destinationData = generateDestinationsData(pureData);
-  // console.log(destinationData)
-  // animateToDestination(destinationData, cubesCollection);
-  animateToTarget(pureData);
+  var currentTimeArray = (0, _utils.getTimeArray)(current);
+  var pureData = getDestsData(currentTimeArray);
+  var transformedData = transformDataStructureForTransitionTo(pureData);
+  var transformedCollections = transformCollectionsStructureForTransitionTo(boxesCollection);
+  // console.log('-before transform-')
+  // console.log(pureData)
+  // console.log('-after transform-')
+  // console.log(transformedData)
+  var finalData = generateDestinationsData(transformedData);
+  console.log('-after final-');
+  console.log(finalData);
+  animateToGoal(finalData, transformedCollections);
+  // animateToTarget(pureData, boxesCollection)
+
   (0, _store.setPrevTime)(current);
   (0, _store.setCurrentDisplayData)(pureData);
 }
-
-// function getLatestTimeArray () {
-//   // let currentNumber = [1, 2, 1, 2]
-//   const current = new Date();
-//   const currentTimeArray = getTimeArray(current);
-//   return currentTimeArray
-// }
-
-function generateDestinationsData(data) {
-  return data.map(function (element, index, array) {
-    var destination = element;
-    var isSecondHalfBox = index % 2 === 1 ? true : false;
-    var firstHalfBoxDestination = array[index - 1];
-    var duration = void 0,
-        turn90More = void 0;
-    if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-      duration = Math.PI / 2 / transitionToSpeed + transitionToDuration;
-      turn90More = true;
+function transformDataStructureForTransitionTo(data) {
+  // because of how transitionToNumber transition the elements
+  // left, left, right.  left left right. etc
+  // We are modifying the structure to make the animate func more readable
+  return data.reduce(function (accu, value, index) {
+    if (index % 2 === 0) {
+      accu.push(value, value);
     } else {
-      duration = transitionToDuration;
-      turn90More = false;
+      accu.push(value);
     }
-
-    return {
-      destination: destination,
-      duration: duration,
-      turn90More: turn90More,
-      isSecondHalfBox: isSecondHalfBox
-    };
-  });
+    return accu;
+  }, []);
 }
 
-// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
-function animateToDestination(data, target) {
-  var tl = new TimelineMax();
-  var delay = 0;
-  data.forEach(function (element, index, array) {
-    var destination = element.destination,
-        duration = element.duration,
-        turn90More = element.turn90More,
-        isSecondHalfBox = element.isSecondHalfBox;
-    // let firstStopDestination
-    // if (isSecondHalfBox) {
-    //   firstStopDestination = array[index - 1]
-    // }
+function transformCollectionsStructureForTransitionTo(data) {
+  // because of how transitionToNumber transition the elements
+  // left, left, right.  left left right. etc
+  // We are modifying the structure to make the animate func more readable
+  return data.reduce(function (accu, value, index) {
+    if (index % 2 === 0) {
+      accu.push(value);
+    } else {
+      accu.push(value, value);
+    }
+    return accu;
+  }, []);
+}
 
-    tl.to(target[index].rotation, duration, {
+function animateToGoal(data, collections) {
+  var tl = new TimelineMax();
+  data.forEach(function (element, index) {
+    var duration = element.duration;
+    var delay = element.delay;
+    var destination = element.destination;
+    tl.to(collections[index].rotation, duration, {
       directionalRotation: {
         z: -destination + "_ccw",
         useRadians: true
       },
       ease: Power0.easeNone
     }, delay);
-
-    // if (turn90More) {
-    //   tl.to(target[index].rotation, transitionToDuration/4, {
-    //     directionalRotation: {
-    //       z: -destination + "_ccw",
-    //       useRadians: true
-    //     },
-    //     ease: Power0.easeNone
-    //   }, delay)
-    // }
-    if (isSecondHalfBox) {
-      delay += transitionToDelay;
-    }
   });
 }
 
-function animateToTarget(target) {
-  console.log(target);
-  var length = cubesCollection.length - 1; // because of plus two each iteration
+function generateDestinationsData(data) {
+  var rootDelay = 0;
+  return data.map(function (element, index, array) {
+    var delay = rootDelay;
+    var destination = element;
+    var isSecondHalfBox = index % 3 === 2 ? true : false;
+    var firstHalfBoxDestination = array[index - 1];
+    var duration = void 0,
+        turn90More = void 0;
+    if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
+      turn90More = true;
+      duration = transitionToDuration / 4;
+    } else {
+      turn90More = false;
+      duration = transitionToDuration;
+    }
+
+    if (isSecondHalfBox === true) {
+      delay += transitionToDuration;
+      rootDelay += transitionToDelay;
+    }
+
+    return {
+      destination: destination,
+      duration: duration,
+      delay: delay,
+      turn90More: turn90More,
+      isSecondHalfBox: isSecondHalfBox
+    };
+  });
+}
+// CAN THIS REALLY BE REFACTORED? 
+function animateToTarget(target, boxesCollection) {
+  // console.log(target)
+  var length = boxesCollection.length - 1; // because of plus two each iteration
   var tl = new TimelineMax();
 
   var counter = 0;
   var delay = 0;
   while (counter < length) {
-    tl.to(cubesCollection[counter].rotation, transitionToDuration, {
+    tl.to(boxesCollection[counter].rotation, transitionToDuration, {
       directionalRotation: {
         z: -target[counter] + "_ccw",
         useRadians: true
@@ -49957,7 +50021,7 @@ function animateToTarget(target) {
       ease: Power0.easeNone
     }, delay);
 
-    tl.to(cubesCollection[counter + 1].rotation, transitionToDuration, {
+    tl.to(boxesCollection[counter + 1].rotation, transitionToDuration, {
       directionalRotation: {
         z: -target[counter] + "_ccw",
         useRadians: true
@@ -49966,9 +50030,7 @@ function animateToTarget(target) {
     }, delay);
 
     if (target[counter] !== target[counter + 1]) {
-      // console.log('-yeah-')
-      // console.log(-target[counter+1] + "_ccw");
-      tl.to(cubesCollection[counter + 1].rotation, transitionToDuration / 4, {
+      tl.to(boxesCollection[counter + 1].rotation, transitionToDuration / 4, {
         directionalRotation: {
           z: -target[counter + 1] + "_ccw",
           useRadians: true
@@ -50025,112 +50087,124 @@ function animatePartsTo(data, boxes) {
   }
 }
 
-function getDestsData(currentNumber, useRadians, compensateDegrees) {
-  var data = (0, _store.getData)(currentNumber);
-  // console.log("--before flat--")
-  // console.log(data)
-  // flatten four into one
+// unit cheked R-3
+function getDestsData(currentNumber) {
+  var data = void 0;
+  data = (0, _store.getData)();
+  data = extractNumberAllData(currentNumber, data);
   data = flattenData(data);
-  var radData = {};
-  var compData = {};
-  var roundedData = {};
-  var counterCWData = [];
-
-  //  if compenstated by degrees
-  if (compensateDegrees) {
-    for (var i in data) {
-      compData[i] = compensateDegreesBy(data[i], compensateDegrees);
-    }
-    data = compData;
-  }
-
-  //  if return one converted to radians
-  if (useRadians) {
-    for (var _i in data) {
-      radData[_i] = convertToRad(data[_i]);
-    }
-    data = radData;
-  }
-
-  for (var _i2 in data) {
-    roundedData[_i2] = roundToFourDecimals(data[_i2]);
-  }
-  data = roundedData;
-
-  counterCWData = data.all.map(function (element) {
-    return element;
-  });
-
-  // console.log("--after rounded--")
-  // console.log(data)
-
-  return counterCWData;
+  data = convertToRad(data);
+  data = roundToFourDecimals(data);
+  return data;
 }
 
+// unit cheked R-3
+function extractNumberAllData(array, data) {
+  return [data[array[0]].all, data[array[1]].all, data[array[2]].all, data[array[3]].all];
+}
+
+// unit cheked R-3
 function roundToFourDecimals(data) {
   return data.map(function (element) {
     return Math.round(element * 10000) / 10000;
   });
 }
 
+// unit cheked R-3
 function flattenData(data) {
-  var newArray = {
-    right: [],
-    left: [],
-    all: []
-  };
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var i = _step2.value;
-
-      newArray.right = newArray.right.concat(i.right);
-      newArray.left = newArray.left.concat(i.left);
-      newArray.all = newArray.all.concat(i.all);
-    }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
-
-  return newArray;
+  return data.reduce(function (accu, value) {
+    return accu.concat(value);
+  }, []);
 }
 
-function compensateDegreesBy(data, deg) {
-  return data.map(function (element) {
-    return element + deg;
-  });
-}
-
+// unit cheked R-3
 function convertToRad(data) {
   return data.map(function (element) {
     return (0, _utils.degToRad)(element);
   });
 }
 
-function getTimeArray(date) {
-  var hours = date.getHours();
-  var minutes = date.getMinutes();
-  hours = hours < 10 ? "0" + hours : String(hours);
-  minutes = minutes < 10 ? "0" + minutes : String(minutes);
-  return (hours + minutes).split("");
-}
-
 exports.iniRotations = iniRotations;
 exports.transitionToNumber = transitionToNumber;
+
+// function getLatestTimeArray () {
+//   // let currentNumber = [1, 2, 1, 2]
+//   const current = new Date();
+//   const currentTimeArray = getTimeArray(current);
+//   return currentTimeArray
+// }
+
+// function generateDestinationsData (data) {
+//   return data.map((element, index, array) => {
+//     const destination = element
+//     const isSecondHalfBox = index % 2 === 1 ?  true : false
+//     const firstHalfBoxDestination = array[index - 1];
+//     let duration, turn90More
+//     if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
+//       duration = Math.PI / 2 / transitionToSpeed + transitionToDuration
+//       turn90More = true
+//     } else {
+//       duration = transitionToDuration
+//       turn90More = false
+//     }
+
+//     return {
+//       destination,
+//       duration,
+//       turn90More,
+//       isSecondHalfBox
+//     }
+//   })
+// }
+
+// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
+// function animateToDestination(data, target) {
+//   const tl = new TimelineMax()
+//   let delay = 0
+//   data.forEach((element, index, array) => {
+//     const {destination, duration, turn90More, isSecondHalfBox} = element
+//     // let firstStopDestination
+//     // if (isSecondHalfBox) {
+//     //   firstStopDestination = array[index - 1]
+//     // }
+
+//     tl.to(target[index].rotation, duration, {
+//       directionalRotation: {
+//         z: -destination + "_ccw",
+//         useRadians: true
+//       },
+//       ease: Power0.easeNone
+//     }, delay)
+
+//     // if (turn90More) {
+//     //   tl.to(target[index].rotation, transitionToDuration/4, {
+//     //     directionalRotation: {
+//     //       z: -destination + "_ccw",
+//     //       useRadians: true
+//     //     },
+//     //     ease: Power0.easeNone
+//     //   }, delay)
+//     // }
+//     if (isSecondHalfBox) {
+//       delay += transitionToDelay
+//     }
+//   })
+// }
+
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+// still possible to refactor? READABLE??
+
+
+// this is a high level function that starts the transition to number process
+// first it get current time
+// converts it into array
+// then it gets data from that latest time array
+// then it animate to that target based on the data
+// during this process, we also updates the states
+// by updating the latest time and current display data in the store
 },{"./store.js":6,"./utils.js":5}],2:[function(require,module,exports) {
 'use strict';
 
@@ -50142,12 +50216,104 @@ var _animate = require('./src/animate.js');
 
 var _utils = require('./src/utils.js');
 
+// import {
+//   prepareForUpdates
+// } from './src/update.js'
+
+
 var masterTimeline = new _gsap.TimelineMax();
 // import {CustomEase} from './node_modules/gsap/CustomEase.min.js'
 
 masterTimeline.add(_draw.setUp, 0);
 masterTimeline.add(_animate.iniRotations, 2);
 masterTimeline.add(_animate.transitionToNumber, 3);
+// masterTimeline.add("transitionToNumberEnd")
+// masterTimeline.add(prepareForUpdates)
+
+
+function prepareForUpdates() {
+  // installVisibilityListener();
+  // checkUpdateEveryMinute();
+}
+
+function installVisibilityListener() {
+  var hidden = void 0,
+      visibilityChange = void 0;
+  var isTabActive = true;
+
+  if (typeof document.hidden !== "undefined") {
+    // Opera 12.10 and Firefox 18 and later support
+    hidden = "hidden";
+    visibilityChange = "visibilitychange";
+  } else if (typeof document.msHidden !== "undefined") {
+    hidden = "msHidden";
+    visibilityChange = "msvisibilitychange";
+  } else if (typeof document.webkitHidden !== "undefined") {
+    hidden = "webkitHidden";
+    visibilityChange = "webkitvisibilitychange";
+  }
+
+  // Warn if the browser doesn't support addEventListener or the Page Visibility API
+  if (typeof document.addEventListener === "undefined" || typeof document.hidden === "undefined") {
+    console.log("This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API.");
+  } else {
+    // Handle page visibility change
+    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+  }
+}
+
+function handleVisibilityChange() {
+  if (document[hidden]) {
+    isTabActive = false;
+  } else {
+    isTabActive = true;
+    checkTimeCorrect();
+  }
+}
+
+function checkTimeCorrect() {
+  console.log("--checking--");
+  var date = new Date();
+  var prevTime = getPrevTime();
+  // console.log(tl.isActive())
+  // console.log(date)
+  // console.log(prevTime)
+  if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())) {
+    // console.log('-check time correct-')
+    setPrevTime(date);
+    comparePrevDest(date);
+  }
+}
+
+function comparePrevDest(date) {
+  var array = getTimeArray(date);
+  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
+  var data = getDestsData(array, true, 0);
+  var prevData = getCurrentDisplayData();
+  // console.log('-dest data-')
+  // console.log(data)
+  // console.log('-ori data-')
+  // console.log(prevData)
+  var shortestPaths = void 0;
+  if (prevData[0] < 0) {
+    shortestPaths = (0, _utils.getShortestClockwiseNegativeDest)(prevData, data, true);
+  } else {
+    shortestPaths = (0, _utils.getShortestClockwiseDest)(prevData, data, true);
+  }
+
+  var finalData = (0, _utils.compareOriDest)(prevData, data, 8, true);
+  // console.log("---prev--")
+  // console.log(prevData)
+  // console.log("---dest--")
+  // console.log(data)
+  // console.log("---shortest--")
+  // console.log(shortestPaths)
+  // console.log('---final--')
+  // console.log(finalData)
+  // animateToTarget(shortestPaths,cubesCollection)
+  animatePartsTo(finalData, cubesCollection);
+  setCurrentDisplayData(data);
+}
 
 // we are at refactoring transtiontonumber structure.
 
@@ -50178,40 +50344,6 @@ masterTimeline.add(_animate.transitionToNumber, 3);
 // }, DELAY * 3 )
 
 
-var hidden, visibilityChange;
-var isTabActive = true;
-
-if (typeof document.hidden !== "undefined") {
-  // Opera 12.10 and Firefox 18 and later support
-  hidden = "hidden";
-  visibilityChange = "visibilitychange";
-} else if (typeof document.msHidden !== "undefined") {
-  hidden = "msHidden";
-  visibilityChange = "msvisibilitychange";
-} else if (typeof document.webkitHidden !== "undefined") {
-  hidden = "webkitHidden";
-  visibilityChange = "webkitvisibilitychange";
-}
-
-// If the page is hidden, pause the video
-// if the page is shown, play the video
-function handleVisibilityChange() {
-  if (document[hidden]) {
-    isTabActive = false;
-  } else {
-    isTabActive = true;
-    checkTimeCorrect();
-  }
-}
-
-// Warn if the browser doesn't support addEventListener or the Page Visibility API
-if (typeof document.addEventListener === "undefined" || typeof document.hidden === "undefined") {
-  console.log("This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API.");
-} else {
-  // Handle page visibility change
-  // document.addEventListener(visibilityChange, handleVisibilityChange, false)
-}
-
 function attachIncrementListener() {
   var btn = document.getElementsByClassName('increment')[0];
   btn.addEventListener("click", function () {
@@ -50230,20 +50362,6 @@ function toggleButtonVisibility() {
   tl.to(btn, 2, {
     opacity: 0
   });
-}
-
-function checkTimeCorrect() {
-  console.log('--checking--');
-  var date = new Date();
-  var prevTime = getPrevTime();
-  // console.log(tl.isActive())
-  // console.log(date)
-  // console.log(prevTime)
-  if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())) {
-    // console.log('-check time correct-')
-    setPrevTime(date);
-    comparePrevDest(date);
-  }
 }
 
 function updateToCurrentTime() {
@@ -50288,35 +50406,6 @@ function getPlusOneTime() {
 
 // updates hourly and disable button before animation done?
 
-function comparePrevDest(date) {
-  var array = getTimeArray(date);
-  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
-  var data = getDestsData(array, true, 0);
-  var prevData = getCurrentDisplayData();
-  // console.log('-dest data-')
-  // console.log(data)
-  // console.log('-ori data-')
-  // console.log(prevData)
-  var shortestPaths = void 0;
-  if (prevData[0] < 0) {
-    shortestPaths = (0, _utils.getShortestClockwiseNegativeDest)(prevData, data, true);
-  } else {
-    shortestPaths = (0, _utils.getShortestClockwiseDest)(prevData, data, true);
-  }
-
-  var finalData = (0, _utils.compareOriDest)(prevData, data, 8, true);
-  // console.log("---prev--")
-  // console.log(prevData)
-  // console.log("---dest--")
-  // console.log(data)
-  // console.log("---shortest--")
-  // console.log(shortestPaths)
-  // console.log('---final--')
-  // console.log(finalData)
-  // animateToTarget(shortestPaths,cubesCollection)
-  animatePartsTo(finalData, cubesCollection);
-  setCurrentDisplayData(data);
-}
 
 function repeatEvery(func, interval) {
   // Check current time and calculate the delay until next interval
@@ -50333,7 +50422,7 @@ function repeatEvery(func, interval) {
   // Delay execution until it's an even interval
   setTimeout(start, delay);
 }
-},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5}],17:[function(require,module,exports) {
+},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5}],26:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50456,5 +50545,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[17,2])
+},{}]},{},[26,2])
 //# sourceMappingURL=/dist/three-clock.map
