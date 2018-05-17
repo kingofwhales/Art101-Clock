@@ -7,7 +7,10 @@ import {
 
 import {
   iniRotations,
-  transitionToNumber
+  transitionToNumber,
+  prepareAnimation,
+  plusOne,
+  updateDisplayTime
 } from './src/animate.js'
 
 
@@ -17,19 +20,46 @@ import {
   compareOriDest
 } from "./src/utils.js"
 
+import {
+  getCurrentTimeline,
+  getIsTabActive,
+  setIsTabActive,
+  getPrevTime,
+  setPrevTime
+} from './src/store.js'
 
-// import {
-//   prepareForUpdates
-// } from './src/update.js'
 
 
-const masterTimeline = new TimelineMax()
-masterTimeline.add(setUp, 0);
-masterTimeline.add(iniRotations, 2)
-masterTimeline.add(transitionToNumber, 3)
-// masterTimeline.add("transitionToNumberEnd")
-// masterTimeline.add(prepareForUpdates)
+setUp()
+prepareAnimation()
+prepareUpdates()
 
+
+function prepareUpdates() {
+  // const masterTimeline = getCurrentTimeline()
+  attachIncrementListener()
+  installVisibilityListener();
+
+  const ONE_MINUTE = 60000
+  repeatEvery(updateToCurrentTime, ONE_MINUTE)
+
+  // setInterval(updateToCurrentTime, 1000)
+}
+
+// why is directly exporting not undefined?
+function attachIncrementListener() {
+  const btn = document.getElementsByClassName('increment')[0]
+  btn.addEventListener("click", function () {
+    const masterTimeline = getCurrentTimeline()
+    if (!masterTimeline.isActive()) {
+      console.log('-not active-')
+      console.log(masterTimeline)
+      plusOne()
+    } else {
+      console.log('-active-')
+    }
+  })
+}
 
 function prepareForUpdates() {
   // installVisibilityListener();
@@ -37,21 +67,6 @@ function prepareForUpdates() {
 }
 
 function installVisibilityListener() {
-  let hidden, visibilityChange;
-  let isTabActive = true;
-
-  if (typeof document.hidden !== "undefined") {
-    // Opera 12.10 and Firefox 18 and later support
-    hidden = "hidden";
-    visibilityChange = "visibilitychange";
-  } else if (typeof document.msHidden !== "undefined") {
-    hidden = "msHidden";
-    visibilityChange = "msvisibilitychange";
-  } else if (typeof document.webkitHidden !== "undefined") {
-    hidden = "webkitHidden";
-    visibilityChange = "webkitvisibilitychange";
-  }
-
   // Warn if the browser doesn't support addEventListener or the Page Visibility API
   if (
     typeof document.addEventListener === "undefined" ||
@@ -61,173 +76,48 @@ function installVisibilityListener() {
       "This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API."
     );
   } else {
-    // Handle page visibility change
-    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+    document.addEventListener("visibilitychange", handleVisibilityChange, false);
   }
 }
 
 function handleVisibilityChange() {
-  if (document[hidden]) {
-    isTabActive = false;
+  if (document["hidden"]) {
+    console.log('-not visible-')
+    setIsTabActive(false)
   } else {
-    isTabActive = true;
+    console.log('-visible now-')
+    setIsTabActive(true)
     checkTimeCorrect();
   }
 }
 
 function checkTimeCorrect() {
-  console.log("--checking--");
-  let date = new Date();
-  let prevTime = getPrevTime();
-  // console.log(tl.isActive())
-  // console.log(date)
-  // console.log(prevTime)
-  if (
-    !tl.isActive() &&
-    (date.getHours() !== prevTime.getHours() ||
-      date.getMinutes() !== prevTime.getMinutes())
-  ) {
-    // console.log('-check time correct-')
+  const date = new Date();
+  const prevTime = getPrevTime() || new Date("Thu May 17 1988 17:43:08 GMT+0800 (CST)");
+  const tl = getCurrentTimeline()
+  const ifTimeChanged = date.getHours() !== prevTime.getHours() ||
+    date.getMinutes() !== prevTime.getMinutes()
+  if (!tl.isActive() && ifTimeChanged){
     setPrevTime(date);
-    comparePrevDest(date);
-  }
-}
-
-function comparePrevDest(date) {
-  let array = getTimeArray(date);
-  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
-  let data = getDestsData(array, true, 0);
-  let prevData = getCurrentDisplayData();
-  // console.log('-dest data-')
-  // console.log(data)
-  // console.log('-ori data-')
-  // console.log(prevData)
-  let shortestPaths;
-  if (prevData[0] < 0) {
-    shortestPaths = getShortestClockwiseNegativeDest(prevData, data, true);
+    updateDisplayTime(date);
   } else {
-    shortestPaths = getShortestClockwiseDest(prevData, data, true);
+    console.log('not gonna update')
   }
-
-  let finalData = compareOriDest(prevData, data, 8, true);
-  // console.log("---prev--")
-  // console.log(prevData)
-  // console.log("---dest--")
-  // console.log(data)
-  // console.log("---shortest--")
-  // console.log(shortestPaths)
-  // console.log('---final--')
-  // console.log(finalData)
-  // animateToTarget(shortestPaths,cubesCollection)
-  animatePartsTo(finalData, cubesCollection);
-  setCurrentDisplayData(data);
 }
 
-
-// we are at refactoring transtiontonumber structure.
-
-
-
-
-
-// how do i refactor?
-// what's my methodology? that is tested against failures
-// 1. readability: if you can't understan the code in 3 seconds/ or you are more than 20 lines .etc, refactor it.
-// 2. structure: if you can't immediately tell what's in this module, refactor it.
-// 3. testability: can i trust you ?  Write the test first, rather than the implementation first?
-// 4. scalability: in what way will you grow? can you grow easily?
-
-// Do I understand you?
-// Do I trust you?
-// Can I find you?
-// Can I grow you?
-
-// start along with how the program proceed....
-// first step users visit...
-
-
-
-// const oneMinute = 60000
-// const delay = 4000
-
-// attachIncrementListener()
-// setTimeout(() => {
-//   repeatEvery(updateToCurrentTime, ONE_MINUTE)
-//   // setInterval(updateToCurrentTime, ONE_MINUTE)
-// }, DELAY * 3 )
-
-
-
-
-
-function attachIncrementListener () {
-  let btn = document.getElementsByClassName('increment')[0]
-  btn.addEventListener("click", function() {
-    if (!tl.isActive()) {
-      console.log('-not active-')
-      plusOne()
-    } else {
-      console.log('-active-')
-    }
-  })
-}
-
-function toggleButtonVisibility () {
-  let btn = document.getElementsByClassName("increment")[0]
-  let tl = new TimelineMax()
-  tl.to(btn, 2, {
-    opacity:0
-  })
-}
-
-
-
-
-
-function updateToCurrentTime () {
-  // only run when not active
-  // let date = new Date()
-  // let prevTime = getPrevTime()
-  // let sameTime = false
-  // // // console.log('--running interval func---')
-
-  // if (date.getHours() === prevTime.getHours() && date.getMinutes()=== prevTime.getMinutes()){
-  //   // console.log('--same time--')
-  //   // console.log(date.getHours())
-  //   // console.log(date.getMinutes())
-  //   // console.log(prevTime.getHours())
-  //   // console.log(prevTime.getMinutes())
-  //   sameTime = true
-  // }
-  // if (!tl.isActive() && !sameTime && isTabActive) {
+function updateToCurrentTime() {
+  const tl = getCurrentTimeline()
+  const isTabActive = getIsTabActive()
+  console.log('-checking intervals-')
+  console.log(tl.isActive())
+  console.log(isTabActive)
   if (!tl.isActive() && isTabActive) {
-    // console.log("---actually updating---")
+    console.log("---actually updating---")
     let date = new Date()
     setPrevTime(date)
-    comparePrevDest(date)
+    updateDisplayTime(date)
   }
 }
-
-function plusOne () {
-  console.log('plus one')
-  let date = getPlusOneTime()
-  // let array = getTimeArray(date)
-  comparePrevDest(date)
-
-  // let newData = compareOriDest(prevData.dests, data.dests)
-
-}
-
-function getPlusOneTime () {
-  let date = getPrevTime() || new Date()
-  date.setMinutes(date.getMinutes() + 1)
-  setPrevTime(date)
-  return date
-}
-
-// updates hourly and disable button before animation done?
-
-
 
 
 

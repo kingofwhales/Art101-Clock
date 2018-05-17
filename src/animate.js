@@ -4,27 +4,48 @@ import {
   getPrevTime,
   setPrevTime,
   getCurrentDisplayData,
-  setCurrentDisplayData
+  setCurrentDisplayData,
+  setCurrentTimeline
 } from "./store.js";
+
 
 import {
   degToRad,
+  getShortestClockwiseDest,
+  getShortestClockwiseNegativeDest,
+  // compareOriDest,
   getTimeArray
 } from './utils.js'
 
 const initialDuration = 8;
-const transitionToDuration = 4
+const transitionToDuration = 6
 const transitionToDelay = 0.08;
 const transitionToSpeed = Math.PI * 2 / transitionToDuration
 const boxesCollection = getBoxesCollections()
+// const animationTimeline = new TimelineMax()
 
+
+//  don't care too much about structure now
+//  we will refactor units first. then come back to structure.
+//  okay?
+function prepareAnimation () {
+  const tl = startLoopingRotations(boxesCollection)
+  setCurrentTimeline(tl)
+  // a bit redundant here?
+  setTimeout(() => {
+    const tl = transitionToNumber()
+    setCurrentTimeline(tl)
+  },3000)
+}
+
+// R-2
 function iniRotations () {
   startLoopingRotations(boxesCollection)
 }
-// unit checked R-2
-// animations
-function startLoopingRotations(boxesCollection) {
-  const tl = new TimelineMax();
+
+// R-2
+function startLoopingRotations() {
+  const tl = new TimelineMax()
   for (const i of boxesCollection) {
     tl.to(
       i.rotation,
@@ -38,34 +59,35 @@ function startLoopingRotations(boxesCollection) {
       0
     );
   }
+  return tl
 }
 
-// unit checked R-3
+// R-3
 function transitionToNumber() {
   const current = new Date();
+  // const current = new Date("Thu May 17 2018 14:56:12 GMT+0800 (CST)");
   const currentTimeArray = getTimeArray(current);
   const pureData = getDestsData(currentTimeArray);
-  const transformedData  = transformDataStructureForTransitionTo(pureData)
-  const transformedCollections = transformCollectionsStructureForTransitionTo(boxesCollection)
-  // console.log('-before transform-')
-  // console.log(pureData)
-  // console.log('-after transform-')
-  // console.log(transformedData)
-  const finalData = generateDestinationsData(transformedData)
-  console.log('-after final-')
-  console.log(finalData)
-  animateToGoal(finalData, transformedCollections)
-  // animateToTarget(pureData, boxesCollection)
+  const detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay)
+  const transformedData = transformDataStructureForTransitionTo(detailedData, true)
+  const transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false)
+
+  const tl = animateToGoal(transformedData, transformedCollections)
 
   setPrevTime(current);
   setCurrentDisplayData(pureData);
+  return tl
 }
-function transformDataStructureForTransitionTo (data) {
+
+// R - 3
+// T - 3
+function transformDataStructureForTransitionTo (data, duplicateFirst) {
   // because of how transitionToNumber transition the elements
   // left, left, right.  left left right. etc
   // We are modifying the structure to make the animate func more readable
   return data.reduce((accu, value, index) => {
-    if (index % 2 === 0) {
+    const isFirstElement = index % 2 === 0
+    if (isFirstElement === duplicateFirst) {
       accu.push(value, value)
     } else {
       accu.push(value)
@@ -74,20 +96,7 @@ function transformDataStructureForTransitionTo (data) {
   }, [])
 }
 
-function transformCollectionsStructureForTransitionTo(data) {
-  // because of how transitionToNumber transition the elements
-  // left, left, right.  left left right. etc
-  // We are modifying the structure to make the animate func more readable
-  return data.reduce((accu, value, index) => {
-    if (index % 2 === 0) {
-      accu.push(value)
-    } else {
-      accu.push(value, value)
-    }
-    return accu
-  }, [])
-}
-
+// R - 3
 function animateToGoal (data, collections) {
   const tl = new TimelineMax()
   data.forEach((element, index) => {
@@ -104,90 +113,7 @@ function animateToGoal (data, collections) {
       }, delay
     )
   })
-}
-
-function generateDestinationsData (data) {
-  let rootDelay = 0
-  return data.map((element, index, array) => {
-    let delay = rootDelay
-    const destination = element
-    const isSecondHalfBox = index % 3 === 2 ?  true : false
-    const firstHalfBoxDestination = array[index - 1];
-    let duration, turn90More
-    if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-      turn90More = true
-      duration = transitionToDuration / 4
-    } else {
-      turn90More = false
-      duration = transitionToDuration
-    }
-
-    if (isSecondHalfBox === true) {
-      delay += transitionToDuration
-      rootDelay += transitionToDelay
-    }
-
-    return {
-      destination,
-      duration,
-      delay,
-      turn90More,
-      isSecondHalfBox
-    }
-  })
-}
-// CAN THIS REALLY BE REFACTORED? 
-function animateToTarget(target, boxesCollection) {
-  // console.log(target)
-  const length = boxesCollection.length - 1; // because of plus two each iteration
-  const tl = new TimelineMax();
-
-  let counter = 0;
-  let delay = 0
-  while (counter < length) {
-    tl.to(
-      boxesCollection[counter].rotation,
-      transitionToDuration,
-      {
-        directionalRotation: {
-          z: -target[counter] + "_ccw",
-          useRadians: true
-        },
-        ease: Power0.easeNone
-      },
-      delay
-    );
-
-    tl.to(
-      boxesCollection[counter + 1].rotation,
-      transitionToDuration,
-      {
-        directionalRotation: {
-          z: -target[counter] + "_ccw",
-          useRadians: true
-        },
-        ease: Power0.easeNone
-      },
-      delay
-    );
-
-    if (target[counter] !== target[counter + 1]) {
-      tl.to(
-        boxesCollection[counter + 1].rotation,
-        transitionToDuration / 4,
-        {
-          directionalRotation: {
-            z: -target[counter+1] + "_ccw",
-            useRadians: true
-          },
-          ease: Power0.easeNone
-        },
-        transitionToDuration + delay
-      );
-    }
-    delay += transitionToDelay;
-    counter += 2;
-  }
+  return tl
 }
 
 function animatePartsTo(data, boxes) {
@@ -204,14 +130,6 @@ function animatePartsTo(data, boxes) {
     let commonRot = data[counter];
     let redRot = data[counter + 1];
 
-    if (commonRot === undefined) {
-      console.log("--found you---");
-      console.log(counter);
-    }
-    if (redRot === undefined) {
-      console.log("--found you you ---");
-      console.log(counter);
-    }
     // console.log('--what-')
     // console.log(commonRot)
     tl.to(
@@ -243,6 +161,36 @@ function animatePartsTo(data, boxes) {
     baseDelay += 0.02;
   }
 }
+
+// R - 3
+// T - 3
+function generateDestinationsData (data, transitionToDuration, transitionToDelayce) {
+  let rootDelay = 0
+  return data.map((element, index, array) => {
+    const isRightHalfBox = index % 2 === 1 ?  true : false
+    const leftHalfBoxDestination = array[index - 1];
+    const turn90More = element !== leftHalfBoxDestination
+    let delay = rootDelay
+    let duration = transitionToDuration
+    if (isRightHalfBox) {
+      delay += transitionToDuration
+      rootDelay += transitionToDelay
+      duration = 0
+    }
+    if (turn90More && isRightHalfBox) {
+      duration = transitionToDuration / 4
+    }
+    return {
+      duration,
+      delay,
+      destination: element
+    }
+  })
+}
+// CAN THIS REALLY BE REFACTORED? 
+
+
+
 
 // unit cheked R-3
 function getDestsData(currentNumber) {
@@ -286,92 +234,97 @@ function convertToRad(data) {
   });
 }
 
+//WHAT does this do?
+// R - 3 
+function updateDisplayTime(date) {
+  const array = getTimeArray(date);
+  const data = getDestsData(array);
+  const prevData = getCurrentDisplayData();
+  const finalData = compareOriDest(prevData, data, transitionToDuration);
+  console.log('-dest-')
+  console.log(data)
+  console.log('-prev-')
+  console.log(prevData)
+  const tl = animateToGoal(finalData, boxesCollection)
 
+  setCurrentTimeline(tl)
+  setCurrentDisplayData(data);
+}
 
+// rewrite compar ori and dest so we can reuse the animateToGoal func
+// write a test for this then
+// 34 lines ... huh.....
+// refactor?
+// R-3
+// T-3
+function compareOriDest(original, destination, loopDuration, rootDelay = 0) {
+  const result = []
+  const fullCircle = Math.PI * 2
+  const speed = fullCircle / loopDuration
+  const quarterDelay = loopDuration / 4
+  const length = original.length
+  destination.forEach((destinationRot, counter) => {
+    const originalRot = original[counter];
+    const diff = Math.abs(destinationRot - originalRot);
+    const travelDistance = originalRot > destinationRot ? fullCircle - diff : diff;
+    const isRightHalfBox = counter % 2 === 1 ? true : false;
+    const duration = Math.round((travelDistance / speed) *  100) / 100
+    let delay = Math.round(rootDelay * 100) / 100;
+    let item;
+    if (isRightHalfBox && diff != 0) {
+      const prevRot = original[counter - 1];
+      const whetherStraight = originalRot === prevRot;
+      if (!whetherStraight) { //if not straight, delay to align first and then rotate
+        delay = delay + quarterDelay;
+      }
+    }
+    result.push({
+      delay,
+      duration,
+      destination: destinationRot,
+      original: originalRot
+    });
+    // console.log('-pushing ')
+    // console.log({
+    //   delay,
+    //   duration,
+    //   destination: destinationRot,
+    //   original: originalRot
+    // });
 
-
-export {
-  iniRotations,
-  transitionToNumber
+    if (isRightHalfBox & diff != 0) {
+      rootDelay += transitionToDelay;
+    }
+  })
+  // console.log('-final-')
+  // console.log(result)
+  return result
 }
 
 
 
-// function getLatestTimeArray () {
-//   // let currentNumber = [1, 2, 1, 2]
-//   const current = new Date();
-//   const currentTimeArray = getTimeArray(current);
-//   return currentTimeArray
-// }
+function plusOne() {
+  const date = getPlusOneTime()
+  setPrevTime(date)
+  updateDisplayTime(date)
+}
 
-// function generateDestinationsData (data) {
-//   return data.map((element, index, array) => {
-//     const destination = element
-//     const isSecondHalfBox = index % 2 === 1 ?  true : false
-//     const firstHalfBoxDestination = array[index - 1];
-//     let duration, turn90More
-//     if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-//       duration = Math.PI / 2 / transitionToSpeed + transitionToDuration
-//       turn90More = true
-//     } else {
-//       duration = transitionToDuration
-//       turn90More = false
-//     }
-
-//     return {
-//       destination,
-//       duration,
-//       turn90More,
-//       isSecondHalfBox
-//     }
-//   })
-// }
-
-// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
-// function animateToDestination(data, target) {
-//   const tl = new TimelineMax()
-//   let delay = 0
-//   data.forEach((element, index, array) => {
-//     const {destination, duration, turn90More, isSecondHalfBox} = element
-//     // let firstStopDestination
-//     // if (isSecondHalfBox) {
-//     //   firstStopDestination = array[index - 1]
-//     // }
-
-//     tl.to(target[index].rotation, duration, {
-//       directionalRotation: {
-//         z: -destination + "_ccw",
-//         useRadians: true
-//       },
-//       ease: Power0.easeNone
-//     }, delay)
-
-//     // if (turn90More) {
-//     //   tl.to(target[index].rotation, transitionToDuration/4, {
-//     //     directionalRotation: {
-//     //       z: -destination + "_ccw",
-//     //       useRadians: true
-//     //     },
-//     //     ease: Power0.easeNone
-//     //   }, delay)
-//     // }
-//     if (isSecondHalfBox) {
-//       delay += transitionToDelay
-//     }
-//   })
-// }
-
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
+// R-3
+function getPlusOneTime() {
+  let date = getPrevTime() || new Date()
+  date.setMinutes(date.getMinutes() + 1)
+  return date
+}
 
 
-// this is a high level function that starts the transition to number process
-// first it get current time
-// converts it into array
-// then it gets data from that latest time array
-// then it animate to that target based on the data
-// during this process, we also updates the states
-// by updating the latest time and current display data in the store
+
+export {
+  prepareAnimation,
+  iniRotations,
+  transitionToNumber,
+  generateDestinationsData,
+  transformDataStructureForTransitionTo,
+  plusOne,
+  compareOriDest,
+  updateDisplayTime
+};

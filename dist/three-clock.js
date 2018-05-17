@@ -49505,7 +49505,7 @@ exports.getTimeArray = getTimeArray;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.getBoxesCollections = exports.updateBoxesCollection = exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
+exports.setIsTabActive = exports.getIsTabActive = exports.setCurrentTimeline = exports.getCurrentTimeline = exports.getBoxesCollections = exports.updateBoxesCollection = exports.setCurrentDisplayData = exports.getCurrentDisplayData = exports.setPrevTime = exports.getPrevTime = exports.getData = undefined;
 
 var _utils = require('./utils.js');
 
@@ -49513,9 +49513,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var time = void 0,
     currentDisplayData = void 0;
+var currentTimeline = void 0;
+var isTabActive = true;
 
 var boxesCollection = [];
 
+function getIsTabActive() {
+  return isTabActive;
+}
+
+function setIsTabActive(isActive) {
+  isTabActive = isActive;
+  return isTabActive;
+}
+
+function getCurrentTimeline() {
+  return currentTimeline;
+}
+
+function setCurrentTimeline(tl) {
+  currentTimeline = tl;
+  return currentTimeline;
+}
 function getBoxesCollections() {
   return boxesCollection;
 }
@@ -49632,6 +49651,10 @@ exports.getCurrentDisplayData = getCurrentDisplayData;
 exports.setCurrentDisplayData = setCurrentDisplayData;
 exports.updateBoxesCollection = updateBoxesCollection;
 exports.getBoxesCollections = getBoxesCollections;
+exports.getCurrentTimeline = getCurrentTimeline;
+exports.setCurrentTimeline = setCurrentTimeline;
+exports.getIsTabActive = getIsTabActive;
+exports.setIsTabActive = setIsTabActive;
 },{"./utils.js":5}],14:[function(require,module,exports) {
 'use strict';
 
@@ -49859,24 +49882,40 @@ exports.setUp = setUp;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.transitionToNumber = exports.iniRotations = undefined;
+exports.updateDisplayTime = exports.compareOriDest = exports.plusOne = exports.transformDataStructureForTransitionTo = exports.generateDestinationsData = exports.transitionToNumber = exports.iniRotations = exports.prepareAnimation = undefined;
 
 var _store = require("./store.js");
 
 var _utils = require("./utils.js");
 
 var initialDuration = 8;
-var transitionToDuration = 4;
+var transitionToDuration = 6;
 var transitionToDelay = 0.08;
 var transitionToSpeed = Math.PI * 2 / transitionToDuration;
 var boxesCollection = (0, _store.getBoxesCollections)();
+// const animationTimeline = new TimelineMax()
 
+
+//  don't care too much about structure now
+//  we will refactor units first. then come back to structure.
+//  okay?
+function prepareAnimation() {
+  var tl = startLoopingRotations(boxesCollection);
+  (0, _store.setCurrentTimeline)(tl);
+  // a bit redundant here?
+  setTimeout(function () {
+    var tl = transitionToNumber();
+    (0, _store.setCurrentTimeline)(tl);
+  }, 3000);
+}
+
+// R-2
 function iniRotations() {
   startLoopingRotations(boxesCollection);
 }
-// unit checked R-2
-// animations
-function startLoopingRotations(boxesCollection) {
+
+// R-2
+function startLoopingRotations() {
   var tl = new TimelineMax();
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
@@ -49907,34 +49946,36 @@ function startLoopingRotations(boxesCollection) {
       }
     }
   }
+
+  return tl;
 }
 
-// unit checked R-3
+// R-3
 function transitionToNumber() {
   var current = new Date();
+  // const current = new Date("Thu May 17 2018 14:56:12 GMT+0800 (CST)");
   var currentTimeArray = (0, _utils.getTimeArray)(current);
   var pureData = getDestsData(currentTimeArray);
-  var transformedData = transformDataStructureForTransitionTo(pureData);
-  var transformedCollections = transformCollectionsStructureForTransitionTo(boxesCollection);
-  // console.log('-before transform-')
-  // console.log(pureData)
-  // console.log('-after transform-')
-  // console.log(transformedData)
-  var finalData = generateDestinationsData(transformedData);
-  console.log('-after final-');
-  console.log(finalData);
-  animateToGoal(finalData, transformedCollections);
-  // animateToTarget(pureData, boxesCollection)
+  var detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay);
+  var transformedData = transformDataStructureForTransitionTo(detailedData, true);
+  var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
+
+  var tl = animateToGoal(transformedData, transformedCollections);
 
   (0, _store.setPrevTime)(current);
   (0, _store.setCurrentDisplayData)(pureData);
+  return tl;
 }
-function transformDataStructureForTransitionTo(data) {
+
+// R - 3
+// T - 3
+function transformDataStructureForTransitionTo(data, duplicateFirst) {
   // because of how transitionToNumber transition the elements
   // left, left, right.  left left right. etc
   // We are modifying the structure to make the animate func more readable
   return data.reduce(function (accu, value, index) {
-    if (index % 2 === 0) {
+    var isFirstElement = index % 2 === 0;
+    if (isFirstElement === duplicateFirst) {
       accu.push(value, value);
     } else {
       accu.push(value);
@@ -49943,20 +49984,7 @@ function transformDataStructureForTransitionTo(data) {
   }, []);
 }
 
-function transformCollectionsStructureForTransitionTo(data) {
-  // because of how transitionToNumber transition the elements
-  // left, left, right.  left left right. etc
-  // We are modifying the structure to make the animate func more readable
-  return data.reduce(function (accu, value, index) {
-    if (index % 2 === 0) {
-      accu.push(value);
-    } else {
-      accu.push(value, value);
-    }
-    return accu;
-  }, []);
-}
-
+// R - 3
 function animateToGoal(data, collections) {
   var tl = new TimelineMax();
   data.forEach(function (element, index) {
@@ -49971,76 +49999,7 @@ function animateToGoal(data, collections) {
       ease: Power0.easeNone
     }, delay);
   });
-}
-
-function generateDestinationsData(data) {
-  var rootDelay = 0;
-  return data.map(function (element, index, array) {
-    var delay = rootDelay;
-    var destination = element;
-    var isSecondHalfBox = index % 3 === 2 ? true : false;
-    var firstHalfBoxDestination = array[index - 1];
-    var duration = void 0,
-        turn90More = void 0;
-    if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-      turn90More = true;
-      duration = transitionToDuration / 4;
-    } else {
-      turn90More = false;
-      duration = transitionToDuration;
-    }
-
-    if (isSecondHalfBox === true) {
-      delay += transitionToDuration;
-      rootDelay += transitionToDelay;
-    }
-
-    return {
-      destination: destination,
-      duration: duration,
-      delay: delay,
-      turn90More: turn90More,
-      isSecondHalfBox: isSecondHalfBox
-    };
-  });
-}
-// CAN THIS REALLY BE REFACTORED? 
-function animateToTarget(target, boxesCollection) {
-  // console.log(target)
-  var length = boxesCollection.length - 1; // because of plus two each iteration
-  var tl = new TimelineMax();
-
-  var counter = 0;
-  var delay = 0;
-  while (counter < length) {
-    tl.to(boxesCollection[counter].rotation, transitionToDuration, {
-      directionalRotation: {
-        z: -target[counter] + "_ccw",
-        useRadians: true
-      },
-      ease: Power0.easeNone
-    }, delay);
-
-    tl.to(boxesCollection[counter + 1].rotation, transitionToDuration, {
-      directionalRotation: {
-        z: -target[counter] + "_ccw",
-        useRadians: true
-      },
-      ease: Power0.easeNone
-    }, delay);
-
-    if (target[counter] !== target[counter + 1]) {
-      tl.to(boxesCollection[counter + 1].rotation, transitionToDuration / 4, {
-        directionalRotation: {
-          z: -target[counter + 1] + "_ccw",
-          useRadians: true
-        },
-        ease: Power0.easeNone
-      }, transitionToDuration + delay);
-    }
-    delay += transitionToDelay;
-    counter += 2;
-  }
+  return tl;
 }
 
 function animatePartsTo(data, boxes) {
@@ -50057,14 +50016,6 @@ function animatePartsTo(data, boxes) {
     var commonRot = data[counter];
     var redRot = data[counter + 1];
 
-    if (commonRot === undefined) {
-      console.log("--found you---");
-      console.log(counter);
-    }
-    if (redRot === undefined) {
-      console.log("--found you you ---");
-      console.log(counter);
-    }
     // console.log('--what-')
     // console.log(commonRot)
     tl.to(boxes[counter].rotation, commonRot.duration, {
@@ -50086,6 +50037,34 @@ function animatePartsTo(data, boxes) {
     baseDelay += 0.02;
   }
 }
+
+// R - 3
+// T - 3
+function generateDestinationsData(data, transitionToDuration, transitionToDelayce) {
+  var rootDelay = 0;
+  return data.map(function (element, index, array) {
+    var isRightHalfBox = index % 2 === 1 ? true : false;
+    var leftHalfBoxDestination = array[index - 1];
+    var turn90More = element !== leftHalfBoxDestination;
+    var delay = rootDelay;
+    var duration = transitionToDuration;
+    if (isRightHalfBox) {
+      delay += transitionToDuration;
+      rootDelay += transitionToDelay;
+      duration = 0;
+    }
+    if (turn90More && isRightHalfBox) {
+      duration = transitionToDuration / 4;
+    }
+    return {
+      duration: duration,
+      delay: delay,
+      destination: element
+    };
+  });
+}
+// CAN THIS REALLY BE REFACTORED? 
+
 
 // unit cheked R-3
 function getDestsData(currentNumber) {
@@ -50124,87 +50103,97 @@ function convertToRad(data) {
   });
 }
 
+//WHAT does this do?
+// R - 3 
+function updateDisplayTime(date) {
+  var array = (0, _utils.getTimeArray)(date);
+  var data = getDestsData(array);
+  var prevData = (0, _store.getCurrentDisplayData)();
+  var finalData = compareOriDest(prevData, data, transitionToDuration);
+  console.log('-dest-');
+  console.log(data);
+  console.log('-prev-');
+  console.log(prevData);
+  var tl = animateToGoal(finalData, boxesCollection);
+
+  (0, _store.setCurrentTimeline)(tl);
+  (0, _store.setCurrentDisplayData)(data);
+}
+
+// rewrite compar ori and dest so we can reuse the animateToGoal func
+// write a test for this then
+// 34 lines ... huh.....
+// refactor?
+// R-3
+// T-3
+function compareOriDest(original, destination, loopDuration) {
+  var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  var result = [];
+  var fullCircle = Math.PI * 2;
+  var speed = fullCircle / loopDuration;
+  var quarterDelay = loopDuration / 4;
+  var length = original.length;
+  destination.forEach(function (destinationRot, counter) {
+    var originalRot = original[counter];
+    var diff = Math.abs(destinationRot - originalRot);
+    var travelDistance = originalRot > destinationRot ? fullCircle - diff : diff;
+    var isRightHalfBox = counter % 2 === 1 ? true : false;
+    var duration = Math.round(travelDistance / speed * 100) / 100;
+    var delay = Math.round(rootDelay * 100) / 100;
+    var item = void 0;
+    if (isRightHalfBox && diff != 0) {
+      var prevRot = original[counter - 1];
+      var whetherStraight = originalRot === prevRot;
+      if (!whetherStraight) {
+        //if not straight, delay to align first and then rotate
+        delay = delay + quarterDelay;
+      }
+    }
+    result.push({
+      delay: delay,
+      duration: duration,
+      destination: destinationRot,
+      original: originalRot
+    });
+    // console.log('-pushing ')
+    // console.log({
+    //   delay,
+    //   duration,
+    //   destination: destinationRot,
+    //   original: originalRot
+    // });
+
+    if (isRightHalfBox & diff != 0) {
+      rootDelay += transitionToDelay;
+    }
+  });
+  // console.log('-final-')
+  // console.log(result)
+  return result;
+}
+
+function plusOne() {
+  var date = getPlusOneTime();
+  (0, _store.setPrevTime)(date);
+  updateDisplayTime(date);
+}
+
+// R-3
+function getPlusOneTime() {
+  var date = (0, _store.getPrevTime)() || new Date();
+  date.setMinutes(date.getMinutes() + 1);
+  return date;
+}
+
+exports.prepareAnimation = prepareAnimation;
 exports.iniRotations = iniRotations;
 exports.transitionToNumber = transitionToNumber;
-
-// function getLatestTimeArray () {
-//   // let currentNumber = [1, 2, 1, 2]
-//   const current = new Date();
-//   const currentTimeArray = getTimeArray(current);
-//   return currentTimeArray
-// }
-
-// function generateDestinationsData (data) {
-//   return data.map((element, index, array) => {
-//     const destination = element
-//     const isSecondHalfBox = index % 2 === 1 ?  true : false
-//     const firstHalfBoxDestination = array[index - 1];
-//     let duration, turn90More
-//     if (element !== firstHalfBoxDestination && isSecondHalfBox === true) {
-//       duration = Math.PI / 2 / transitionToSpeed + transitionToDuration
-//       turn90More = true
-//     } else {
-//       duration = transitionToDuration
-//       turn90More = false
-//     }
-
-//     return {
-//       destination,
-//       duration,
-//       turn90More,
-//       isSecondHalfBox
-//     }
-//   })
-// }
-
-// this won't work for initial because how dynamic the initial state is. impossible to interpolate from here to there in that kind of dynamic states.
-// function animateToDestination(data, target) {
-//   const tl = new TimelineMax()
-//   let delay = 0
-//   data.forEach((element, index, array) => {
-//     const {destination, duration, turn90More, isSecondHalfBox} = element
-//     // let firstStopDestination
-//     // if (isSecondHalfBox) {
-//     //   firstStopDestination = array[index - 1]
-//     // }
-
-//     tl.to(target[index].rotation, duration, {
-//       directionalRotation: {
-//         z: -destination + "_ccw",
-//         useRadians: true
-//       },
-//       ease: Power0.easeNone
-//     }, delay)
-
-//     // if (turn90More) {
-//     //   tl.to(target[index].rotation, transitionToDuration/4, {
-//     //     directionalRotation: {
-//     //       z: -destination + "_ccw",
-//     //       useRadians: true
-//     //     },
-//     //     ease: Power0.easeNone
-//     //   }, delay)
-//     // }
-//     if (isSecondHalfBox) {
-//       delay += transitionToDelay
-//     }
-//   })
-// }
-
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-// still possible to refactor? READABLE??
-
-
-// this is a high level function that starts the transition to number process
-// first it get current time
-// converts it into array
-// then it gets data from that latest time array
-// then it animate to that target based on the data
-// during this process, we also updates the states
-// by updating the latest time and current display data in the store
+exports.generateDestinationsData = generateDestinationsData;
+exports.transformDataStructureForTransitionTo = transformDataStructureForTransitionTo;
+exports.plusOne = plusOne;
+exports.compareOriDest = compareOriDest;
+exports.updateDisplayTime = updateDisplayTime;
 },{"./store.js":6,"./utils.js":5}],2:[function(require,module,exports) {
 'use strict';
 
@@ -50216,20 +50205,39 @@ var _animate = require('./src/animate.js');
 
 var _utils = require('./src/utils.js');
 
-// import {
-//   prepareForUpdates
-// } from './src/update.js'
+var _store = require('./src/store.js');
 
-
-var masterTimeline = new _gsap.TimelineMax();
 // import {CustomEase} from './node_modules/gsap/CustomEase.min.js'
 
-masterTimeline.add(_draw.setUp, 0);
-masterTimeline.add(_animate.iniRotations, 2);
-masterTimeline.add(_animate.transitionToNumber, 3);
-// masterTimeline.add("transitionToNumberEnd")
-// masterTimeline.add(prepareForUpdates)
+(0, _draw.setUp)();
+(0, _animate.prepareAnimation)();
+prepareUpdates();
 
+function prepareUpdates() {
+  // const masterTimeline = getCurrentTimeline()
+  attachIncrementListener();
+  installVisibilityListener();
+
+  var ONE_MINUTE = 60000;
+  repeatEvery(updateToCurrentTime, ONE_MINUTE);
+
+  // setInterval(updateToCurrentTime, 1000)
+}
+
+// why is directly exporting not undefined?
+function attachIncrementListener() {
+  var btn = document.getElementsByClassName('increment')[0];
+  btn.addEventListener("click", function () {
+    var masterTimeline = (0, _store.getCurrentTimeline)();
+    if (!masterTimeline.isActive()) {
+      console.log('-not active-');
+      console.log(masterTimeline);
+      (0, _animate.plusOne)();
+    } else {
+      console.log('-active-');
+    }
+  });
+}
 
 function prepareForUpdates() {
   // installVisibilityListener();
@@ -50237,175 +50245,51 @@ function prepareForUpdates() {
 }
 
 function installVisibilityListener() {
-  var hidden = void 0,
-      visibilityChange = void 0;
-  var isTabActive = true;
-
-  if (typeof document.hidden !== "undefined") {
-    // Opera 12.10 and Firefox 18 and later support
-    hidden = "hidden";
-    visibilityChange = "visibilitychange";
-  } else if (typeof document.msHidden !== "undefined") {
-    hidden = "msHidden";
-    visibilityChange = "msvisibilitychange";
-  } else if (typeof document.webkitHidden !== "undefined") {
-    hidden = "webkitHidden";
-    visibilityChange = "webkitvisibilitychange";
-  }
-
   // Warn if the browser doesn't support addEventListener or the Page Visibility API
   if (typeof document.addEventListener === "undefined" || typeof document.hidden === "undefined") {
     console.log("This demo requires a browser, such as Google Chrome or Firefox, that supports the Page Visibility API.");
   } else {
-    // Handle page visibility change
-    document.addEventListener(visibilityChange, handleVisibilityChange, false);
+    document.addEventListener("visibilitychange", handleVisibilityChange, false);
   }
 }
 
 function handleVisibilityChange() {
-  if (document[hidden]) {
-    isTabActive = false;
+  if (document["hidden"]) {
+    console.log('-not visible-');
+    (0, _store.setIsTabActive)(false);
   } else {
-    isTabActive = true;
+    console.log('-visible now-');
+    (0, _store.setIsTabActive)(true);
     checkTimeCorrect();
   }
 }
 
 function checkTimeCorrect() {
-  console.log("--checking--");
   var date = new Date();
-  var prevTime = getPrevTime();
-  // console.log(tl.isActive())
-  // console.log(date)
-  // console.log(prevTime)
-  if (!tl.isActive() && (date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes())) {
-    // console.log('-check time correct-')
-    setPrevTime(date);
-    comparePrevDest(date);
-  }
-}
-
-function comparePrevDest(date) {
-  var array = getTimeArray(date);
-  // let array = getTimeArray(new Date("Mon Apr 23 2018 12:17:43 GMT+0800 (CST)"))
-  var data = getDestsData(array, true, 0);
-  var prevData = getCurrentDisplayData();
-  // console.log('-dest data-')
-  // console.log(data)
-  // console.log('-ori data-')
-  // console.log(prevData)
-  var shortestPaths = void 0;
-  if (prevData[0] < 0) {
-    shortestPaths = (0, _utils.getShortestClockwiseNegativeDest)(prevData, data, true);
+  var prevTime = (0, _store.getPrevTime)() || new Date("Thu May 17 1988 17:43:08 GMT+0800 (CST)");
+  var tl = (0, _store.getCurrentTimeline)();
+  var ifTimeChanged = date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes();
+  if (!tl.isActive() && ifTimeChanged) {
+    (0, _store.setPrevTime)(date);
+    (0, _animate.updateDisplayTime)(date);
   } else {
-    shortestPaths = (0, _utils.getShortestClockwiseDest)(prevData, data, true);
+    console.log('not gonna update');
   }
-
-  var finalData = (0, _utils.compareOriDest)(prevData, data, 8, true);
-  // console.log("---prev--")
-  // console.log(prevData)
-  // console.log("---dest--")
-  // console.log(data)
-  // console.log("---shortest--")
-  // console.log(shortestPaths)
-  // console.log('---final--')
-  // console.log(finalData)
-  // animateToTarget(shortestPaths,cubesCollection)
-  animatePartsTo(finalData, cubesCollection);
-  setCurrentDisplayData(data);
-}
-
-// we are at refactoring transtiontonumber structure.
-
-
-// how do i refactor?
-// what's my methodology? that is tested against failures
-// 1. readability: if you can't understan the code in 3 seconds/ or you are more than 20 lines .etc, refactor it.
-// 2. structure: if you can't immediately tell what's in this module, refactor it.
-// 3. testability: can i trust you ?  Write the test first, rather than the implementation first?
-// 4. scalability: in what way will you grow? can you grow easily?
-
-// Do I understand you?
-// Do I trust you?
-// Can I find you?
-// Can I grow you?
-
-// start along with how the program proceed....
-// first step users visit...
-
-
-// const oneMinute = 60000
-// const delay = 4000
-
-// attachIncrementListener()
-// setTimeout(() => {
-//   repeatEvery(updateToCurrentTime, ONE_MINUTE)
-//   // setInterval(updateToCurrentTime, ONE_MINUTE)
-// }, DELAY * 3 )
-
-
-function attachIncrementListener() {
-  var btn = document.getElementsByClassName('increment')[0];
-  btn.addEventListener("click", function () {
-    if (!tl.isActive()) {
-      console.log('-not active-');
-      plusOne();
-    } else {
-      console.log('-active-');
-    }
-  });
-}
-
-function toggleButtonVisibility() {
-  var btn = document.getElementsByClassName("increment")[0];
-  var tl = new _gsap.TimelineMax();
-  tl.to(btn, 2, {
-    opacity: 0
-  });
 }
 
 function updateToCurrentTime() {
-  // only run when not active
-  // let date = new Date()
-  // let prevTime = getPrevTime()
-  // let sameTime = false
-  // // // console.log('--running interval func---')
-
-  // if (date.getHours() === prevTime.getHours() && date.getMinutes()=== prevTime.getMinutes()){
-  //   // console.log('--same time--')
-  //   // console.log(date.getHours())
-  //   // console.log(date.getMinutes())
-  //   // console.log(prevTime.getHours())
-  //   // console.log(prevTime.getMinutes())
-  //   sameTime = true
-  // }
-  // if (!tl.isActive() && !sameTime && isTabActive) {
+  var tl = (0, _store.getCurrentTimeline)();
+  var isTabActive = (0, _store.getIsTabActive)();
+  console.log('-checking intervals-');
+  console.log(tl.isActive());
+  console.log(isTabActive);
   if (!tl.isActive() && isTabActive) {
-    // console.log("---actually updating---")
+    console.log("---actually updating---");
     var date = new Date();
-    setPrevTime(date);
-    comparePrevDest(date);
+    (0, _store.setPrevTime)(date);
+    (0, _animate.updateDisplayTime)(date);
   }
 }
-
-function plusOne() {
-  console.log('plus one');
-  var date = getPlusOneTime();
-  // let array = getTimeArray(date)
-  comparePrevDest(date);
-
-  // let newData = compareOriDest(prevData.dests, data.dests)
-}
-
-function getPlusOneTime() {
-  var date = getPrevTime() || new Date();
-  date.setMinutes(date.getMinutes() + 1);
-  setPrevTime(date);
-  return date;
-}
-
-// updates hourly and disable button before animation done?
-
 
 function repeatEvery(func, interval) {
   // Check current time and calculate the delay until next interval
@@ -50422,7 +50306,7 @@ function repeatEvery(func, interval) {
   // Delay execution until it's an even interval
   setTimeout(start, delay);
 }
-},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5}],26:[function(require,module,exports) {
+},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5,"./src/store.js":6}],43:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50545,5 +50429,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[26,2])
+},{}]},{},[43,2])
 //# sourceMappingURL=/dist/three-clock.map

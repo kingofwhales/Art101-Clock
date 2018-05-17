@@ -3,9 +3,29 @@ import {
 } from './utils.js'
 
 let time, currentDisplayData
+let currentTimeline
+let isTabActive = true
 
 const boxesCollection = []
 
+
+function getIsTabActive () {
+  return isTabActive
+}
+
+function setIsTabActive (isActive) {
+  isTabActive = isActive
+  return isTabActive
+}
+
+function getCurrentTimeline () {
+  return currentTimeline
+}
+
+function setCurrentTimeline (tl) {
+  currentTimeline = tl
+  return currentTimeline
+}
 function getBoxesCollections () {
   return boxesCollection
 }
@@ -691,5 +711,9 @@ export {
   getCurrentDisplayData,
   setCurrentDisplayData,
   updateBoxesCollection,
-  getBoxesCollections
+  getBoxesCollections,
+  getCurrentTimeline,
+  setCurrentTimeline,
+  getIsTabActive,
+  setIsTabActive
 }
