@@ -49333,11 +49333,31 @@ function getColStartingRadians(colNum) {
   var item = [];
   for (var i = 0; i < colNum; i++) {
     var increment = i * 20 + 90;
-    var rad = degToRad(increment);
+    // if (increment > 360) {
+    //   increment -= 360
+    // }
+    var rad = roundUnitToFourDecimals(degToRad(increment));
     item.push(rad);
   }
   return item;
 }
+
+// what did we do eventually?
+//  1. first of all, we make the starting radians all positive, from small to big
+// because in this way, during transition and delay, the later columns won't be too negative, and thus
+// distance won't be too much
+// 2. we are estimating the possible location when it first starts animating
+// then calculate distance, duration, delay
+// then animate based on that
+// with these few solutions
+// we solve these problems
+// 1. later columns won't be going for too long. the traveled distance won't be too much
+// 2. all moving will be at constant speed
+
+function roundUnitToFourDecimals(unit) {
+  return Math.round(unit * 10000) / 10000;
+}
+
 // unit checked R-2
 // unit tested T-3
 // + much faster than .concat
@@ -49373,10 +49393,11 @@ function combine(red, black) {
     for (var _iterator = red[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var i = _step.value;
 
-      newArray.push(i);
-      newArray.push(black[counter]);
+      newArray.push(-i);
+      newArray.push(-black[counter]);
       counter++;
     }
+    // console.log(newArray)
   } catch (err) {
     _didIteratorError = true;
     _iteratorError = err;
@@ -49499,6 +49520,7 @@ exports.compareOriDest = compareOriDest;
 exports.getColStartingRadians = getColStartingRadians;
 exports.degToRad = degToRad;
 exports.getTimeArray = getTimeArray;
+exports.roundUnitToFourDecimals = roundUnitToFourDecimals;
 },{}],6:[function(require,module,exports) {
 'use strict';
 
@@ -49877,22 +49899,25 @@ function render() {
 
 exports.setUp = setUp;
 },{"three":8,"./store.js":6,"./notSure.js":14}],3:[function(require,module,exports) {
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.updateDisplayTime = exports.compareOriDest = exports.plusOne = exports.transformDataStructureForTransitionTo = exports.generateDestinationsData = exports.transitionToNumber = exports.iniRotations = exports.prepareAnimation = undefined;
+exports.getActualDistance = exports.updateDisplayTime = exports.compareOriDest = exports.plusOne = exports.transformDataStructureForTransitionTo = exports.generateDestinationsData = exports.transitionToNumber = exports.iniRotations = exports.prepareAnimation = undefined;
 
-var _store = require("./store.js");
+var _store = require('./store.js');
 
-var _utils = require("./utils.js");
+var _utils = require('./utils.js');
 
-var initialDuration = 8;
+var initialDuration = 10;
+var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 4);
+var initialSpeed = initialRotation / initialDuration;
 var transitionToDuration = 6;
 var transitionToDelay = 0.08;
 var transitionToSpeed = Math.PI * 2 / transitionToDuration;
 var boxesCollection = (0, _store.getBoxesCollections)();
+var whenToTransition = 3;
 // const animationTimeline = new TimelineMax()
 
 
@@ -49902,21 +49927,75 @@ var boxesCollection = (0, _store.getBoxesCollections)();
 function prepareAnimation() {
   var tl = startLoopingRotations(boxesCollection);
   (0, _store.setCurrentTimeline)(tl);
+
+  // compute a dest info array again
+  // generate a starting pos
+  // generate a ending pos
+  // prepareForTransitionTo()
   // a bit redundant here?
   setTimeout(function () {
     var tl = transitionToNumber();
     (0, _store.setCurrentTimeline)(tl);
-  }, 3000);
+  }, whenToTransition * 1000);
 }
 
-// R-2
-function iniRotations() {
-  startLoopingRotations(boxesCollection);
+function prepareForTransitionTo() {
+  console.log('-starting-');
+  var haha = new TimelineMax();
+  // startLoopingRotationsTest()
+  // const startingCols = getColStartingRadians(16)
+  // const startingData = startingCols.reduce((accu, value, index) => {
+  //   const endingValue = roundUnitToFourDecimals(value)
+  //   const item = Array(12).fill(endingValue)
+  //   return accu.concat(item)
+  // }, [])
+  // const startingData = Array(192).fill(0)
+  // const date = new Date()
+  var date = new Date("Fri May 18 2018 13:06:46 GMT+0800 (CST)");
+  var timeArray = (0, _utils.getTimeArray)(date);
+  var pureData = getDestsData(timeArray);
+  var detailedDest = generateDestinationsDataInitial(pureData, transitionToDuration);
+  var boxesCollection = (0, _store.getBoxesCollections)();
+
+  var transformedData = transformDataStructureForTransitionTo(detailedDest, true);
+  var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
+  // console.log('transformed data')
+  // console.log(transformedData)
+  // setTimeout(() => {
+  //   animateToGoal(transformedData, transformedCollections)
+  // }, 4000)
+  haha.add(startLoopingRotationsTest(), 0);
+  haha.add(animateToGoal(transformedData, transformedCollections), 8);
+
+  // console.log(detailedDest)
+  // console.log('-pure-')
+  // console.log(pureData)
+
+  // console.log(startingData)
 }
 
-// R-2
-function startLoopingRotations() {
+// it's different
+// we want the second one to conform to the first one
+// later transitions from number to number
+// they are all within 360
+//  so no problems of these extra loops
+// but the intial ones
+// because of the rotations looping for a while
+//  they will be over 360 and thus create this additional problems
+// let's see from a higher level if this is possible first before we move on
+function startLoopingRotationsTest() {
   var tl = new TimelineMax();
+  // const startingCols = getColStartingRadians(16)
+  // const startingData = startingCols.reduce((accu, value, index) => {
+  //   const endingValue = roundUnitToFourDecimals(value)
+  //   const item = Array(12).fill(endingValue)
+  //   return accu.concat(item)
+  // }, [])
+  // let counter = 0
+  var delay = 0;
+  var counter = 0;
+  var goal = -Math.PI * 2;
+  var delayArray = [];
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -49925,12 +50004,20 @@ function startLoopingRotations() {
     for (var _iterator = boxesCollection[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var i = _step.value;
 
+      if (counter % 12 === 0 && counter != 0) {
+        delay = Math.round((delay + 0.2) * 100) / 100;
+      }
       tl.to(i.rotation, initialDuration, {
         // the actual z will always be from 0 -> -6.28
-        z: "-=6.28319",
+        directionalRotation: {
+          z: goal + "_ccw",
+          useRadians: true
+        },
         ease: Power0.easeNone,
         repeat: -1
-      }, 0);
+      }, delay);
+      counter++;
+      delayArray.push(delay);
     }
   } catch (err) {
     _didIteratorError = true;
@@ -49947,19 +50034,152 @@ function startLoopingRotations() {
     }
   }
 
+  console.log(delayArray);
+  return tl;
+}
+
+function getActualDistance(originalRot, destinationRot) {
+  var fullCircle = Math.PI * 2;
+  var diff = Math.abs(destinationRot - originalRot);
+  var compensatedOriginalRot = originalRot;
+  var loopCounter = 0;
+  while (diff >= fullCircle) {
+    loopCounter++;
+    compensatedOriginalRot += fullCircle;
+    diff = Math.abs(destinationRot - compensatedOriginalRot);
+  }
+
+  var dis = destinationRot > originalRot ? fullCircle - diff : diff;
+  var realDistance = loopCounter * fullCircle + dis;
+  // const realDistance = diff
+  return (0, _utils.roundUnitToFourDecimals)(realDistance);
+}
+
+function generateDestinationsDataInitial(original, destination, loopDuration) {
+  var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  var result = [];
+  var fullCircle = Math.PI * 2;
+  var speed = fullCircle / loopDuration;
+  var quarterDelay = loopDuration / 4;
+  // const length = original.length
+  // console.log(destination)
+  destination.forEach(function (destinationRot, counter, array) {
+    // console.log(counter)
+    if (counter % 12 === 0 && counter != 0) {
+      rootDelay += columnDelay;
+    }
+    var originalRot = original[counter];
+    // const originalRot = 0
+
+    var diff = Math.abs(destinationRot - originalRot);
+    var travelDistance = getActualDistance(originalRot, destinationRot);
+    var prevDestinationRot = array[counter - 1];
+    // const travelDistance = originalRot > destinationRot ? fullCircle - diff : diff;
+    var isRightHalfBox = counter % 2 === 1 ? true : false;
+    var duration = Math.round(travelDistance / speed * 100) / 100;
+    var delay = Math.round(rootDelay * 100) / 100;
+    var item = void 0;
+
+    var destIsSame = destinationRot === prevDestinationRot;
+    if (destIsSame & isRightHalfBox) {
+      delay += result[counter - 1].duration;
+      duration = 0;
+    }
+
+    if (!destIsSame & isRightHalfBox) {
+      delay += result[counter - 1].duration;
+      duration = fullCircle / 4 / speed;
+    }
+
+    result.push({
+      delay: delay,
+      duration: duration,
+      travelDistance: travelDistance,
+      destination: destinationRot,
+      original: originalRot
+    });
+
+    // if (counter % 11 === 0 && counter != 0) {
+    //   rootDelay += 0.2
+    // }
+  });
+  // console.log('---destailed dest---')
+  // console.log(result)
+  return result;
+}
+
+// R-2
+function iniRotations() {
+  startLoopingRotations(boxesCollection);
+}
+
+// R-2
+function startLoopingRotations() {
+  var tl = new TimelineMax({
+    onComplete: function onComplete() {
+      console.log(boxesCollection);
+    }
+  });
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = boxesCollection[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var i = _step2.value;
+
+      tl.to(i.rotation, initialDuration, {
+        // the actual z will always be from 0 -> -6.28
+        z: "-=" + initialRotation,
+        ease: Power0.easeNone,
+        repeat: -1
+      }, 0);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
   return tl;
 }
 
 // R-3
 function transitionToNumber() {
-  var current = new Date();
-  // const current = new Date("Thu May 17 2018 14:56:12 GMT+0800 (CST)");
+  // const current = new Date();
+  var current = new Date("Thu May 17 2018 13:06:12 GMT+0800 (CST)");
   var currentTimeArray = (0, _utils.getTimeArray)(current);
   var pureData = getDestsData(currentTimeArray);
-  var detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay);
+  // const detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay)
+  // const transformedData = transformDataStructureForTransitionTo(detailedData, true)
+  // const transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false)
+
+  var initialStarting = generateInitialStartingPos();
+  var fullInitialStarting = initialStarting.reduce(function (accu, element) {
+    return accu.concat(Array(12).fill(element));
+  }, []);
+
+  var detailedData = generateDestinationsDataInitial(fullInitialStarting, pureData, transitionToDuration);
   var transformedData = transformDataStructureForTransitionTo(detailedData, true);
   var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
+  console.log('-very detailed-');
+  console.log(detailedData);
+  console.log(transformedData);
 
+  // console.log(fullInitialStarting)
+  // console.log('detailed dat')
+  // console.log(detailedData)
+  // console.log(transformedData)
   var tl = animateToGoal(transformedData, transformedCollections);
 
   (0, _store.setPrevTime)(current);
@@ -49993,7 +50213,7 @@ function animateToGoal(data, collections) {
     var destination = element.destination;
     tl.to(collections[index].rotation, duration, {
       directionalRotation: {
-        z: -destination + "_ccw",
+        z: destination + "_ccw",
         useRadians: true
       },
       ease: Power0.easeNone
@@ -50038,6 +50258,22 @@ function animatePartsTo(data, boxes) {
   }
 }
 
+var columnDelay = 0.4;
+
+function generateInitialStartingPos() {
+  var colStartingRadians = (0, _utils.getColStartingRadians)(16);
+  // console.log(colStartingRadians)
+  var initialStarting = colStartingRadians.map(function (element, index) {
+    var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
+    var result = element - traveledDistance;
+    return result;
+  });
+  // console.log('proabbly around here')
+  // console.log(initialStarting)
+  console.log(initialStarting);
+  return initialStarting;
+}
+
 // R - 3
 // T - 3
 function generateDestinationsData(data, transitionToDuration, transitionToDelayce) {
@@ -50048,9 +50284,12 @@ function generateDestinationsData(data, transitionToDuration, transitionToDelayc
     var turn90More = element !== leftHalfBoxDestination;
     var delay = rootDelay;
     var duration = transitionToDuration;
+    if (index % 12 === 0 && index != 0) {
+      rootDelay += columnDelay;
+    }
     if (isRightHalfBox) {
       delay += transitionToDuration;
-      rootDelay += transitionToDelay;
+      // rootDelay += transitionToDelay
       duration = 0;
     }
     if (turn90More && isRightHalfBox) {
@@ -50110,10 +50349,10 @@ function updateDisplayTime(date) {
   var data = getDestsData(array);
   var prevData = (0, _store.getCurrentDisplayData)();
   var finalData = compareOriDest(prevData, data, transitionToDuration);
-  console.log('-dest-');
-  console.log(data);
-  console.log('-prev-');
-  console.log(prevData);
+  // console.log('-dest-')
+  // console.log(data)
+  // console.log('-prev-')
+  // console.log(prevData)
   var tl = animateToGoal(finalData, boxesCollection);
 
   (0, _store.setCurrentTimeline)(tl);
@@ -50126,6 +50365,8 @@ function updateDisplayTime(date) {
 // refactor?
 // R-3
 // T-3
+
+
 function compareOriDest(original, destination, loopDuration) {
   var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
@@ -50194,6 +50435,7 @@ exports.transformDataStructureForTransitionTo = transformDataStructureForTransit
 exports.plusOne = plusOne;
 exports.compareOriDest = compareOriDest;
 exports.updateDisplayTime = updateDisplayTime;
+exports.getActualDistance = getActualDistance;
 },{"./store.js":6,"./utils.js":5}],2:[function(require,module,exports) {
 'use strict';
 
@@ -50211,7 +50453,8 @@ var _store = require('./src/store.js');
 
 (0, _draw.setUp)();
 (0, _animate.prepareAnimation)();
-prepareUpdates();
+// prepareUpdates()
+
 
 function prepareUpdates() {
   // const masterTimeline = getCurrentTimeline()
@@ -50255,10 +50498,10 @@ function installVisibilityListener() {
 
 function handleVisibilityChange() {
   if (document["hidden"]) {
-    console.log('-not visible-');
+    // console.log('-not visible-')
     (0, _store.setIsTabActive)(false);
   } else {
-    console.log('-visible now-');
+    // console.log('-visible now-')
     (0, _store.setIsTabActive)(true);
     checkTimeCorrect();
   }
@@ -50280,11 +50523,11 @@ function checkTimeCorrect() {
 function updateToCurrentTime() {
   var tl = (0, _store.getCurrentTimeline)();
   var isTabActive = (0, _store.getIsTabActive)();
-  console.log('-checking intervals-');
+  // console.log('-checking intervals-')
   console.log(tl.isActive());
   console.log(isTabActive);
   if (!tl.isActive() && isTabActive) {
-    console.log("---actually updating---");
+    // console.log("---actually updating---")
     var date = new Date();
     (0, _store.setPrevTime)(date);
     (0, _animate.updateDisplayTime)(date);
@@ -50306,7 +50549,7 @@ function repeatEvery(func, interval) {
   // Delay execution until it's an even interval
   setTimeout(start, delay);
 }
-},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5,"./src/store.js":6}],43:[function(require,module,exports) {
+},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5,"./src/store.js":6}],50:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50429,5 +50672,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[43,2])
+},{}]},{},[50,2])
 //# sourceMappingURL=/dist/three-clock.map

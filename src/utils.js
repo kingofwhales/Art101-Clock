@@ -5,12 +5,32 @@ function getColStartingRadians(colNum) {
   //  starting at 90 degrees, each column tilt 20 degrees more
   const item = []
   for (let i = 0; i < colNum; i++) {
-    const increment = i * 20 + 90
-    const rad = degToRad(increment)
+    let increment = i * 20 + 90
+    // if (increment > 360) {
+    //   increment -= 360
+    // }
+    const rad = roundUnitToFourDecimals(degToRad(increment))
     item.push(rad)
   }
   return item
 }
+
+// what did we do eventually?
+//  1. first of all, we make the starting radians all positive, from small to big
+// because in this way, during transition and delay, the later columns won't be too negative, and thus
+// distance won't be too much
+// 2. we are estimating the possible location when it first starts animating
+// then calculate distance, duration, delay
+// then animate based on that
+// with these few solutions
+// we solve these problems
+// 1. later columns won't be going for too long. the traveled distance won't be too much
+// 2. all moving will be at constant speed
+
+function roundUnitToFourDecimals (unit) {
+  return Math.round(unit * 10000) / 10000;
+}
+
 // unit checked R-2
 // unit tested T-3
 // + much faster than .concat
@@ -40,10 +60,11 @@ function combine(red, black) {
   let newArray = [];
   let counter = 0;
   for (let i of red) {
-    newArray.push(i);
-    newArray.push(black[counter]);
+    newArray.push(-i);
+    newArray.push(-black[counter]);
     counter++;
   }
+  // console.log(newArray)
   return newArray;
 }
 //  refactor shortest and compare and ...... test fully?!
@@ -152,6 +173,7 @@ export {
   compareOriDest,
   getColStartingRadians,
   degToRad,
-  getTimeArray
+  getTimeArray,
+  roundUnitToFourDecimals
   // arrayPlusOne
 }

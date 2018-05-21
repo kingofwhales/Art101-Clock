@@ -32,7 +32,7 @@ import {
 
 setUp()
 prepareAnimation()
-prepareUpdates()
+// prepareUpdates()
 
 
 function prepareUpdates() {
@@ -82,10 +82,10 @@ function installVisibilityListener() {
 
 function handleVisibilityChange() {
   if (document["hidden"]) {
-    console.log('-not visible-')
+    // console.log('-not visible-')
     setIsTabActive(false)
   } else {
-    console.log('-visible now-')
+    // console.log('-visible now-')
     setIsTabActive(true)
     checkTimeCorrect();
   }
@@ -108,11 +108,11 @@ function checkTimeCorrect() {
 function updateToCurrentTime() {
   const tl = getCurrentTimeline()
   const isTabActive = getIsTabActive()
-  console.log('-checking intervals-')
+  // console.log('-checking intervals-')
   console.log(tl.isActive())
   console.log(isTabActive)
   if (!tl.isActive() && isTabActive) {
-    console.log("---actually updating---")
+    // console.log("---actually updating---")
     let date = new Date()
     setPrevTime(date)
     updateDisplayTime(date)
