@@ -38,6 +38,7 @@ prepareAnimation()
 function prepareUpdates() {
   // const masterTimeline = getCurrentTimeline()
   attachIncrementListener()
+
   installVisibilityListener();
 
   const ONE_MINUTE = 60000

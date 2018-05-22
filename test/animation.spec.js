@@ -282,11 +282,41 @@ describe("Clockwise rotation: get actual traveled distance between two rotationa
       );
     });
   });
+  describe("negative big to negative small: bigger than 360 diff", () => {
+    it("should be right ", () => {
+      const originalRot = -7.6445;
+      const destinationRot = -4.7124;
+      const result = 3.3511;
+      expect(getActualDistance(originalRot, destinationRot)).to.eql(result);
+    });
+  });
+  describe("positive to negative: smaller than 360 diff", () => {
+    it("should be right ", () => {
+      const originalRot = 3.14159;
+      const destinationRot = -1.5708;
+      const result = 4.7124;
+      expect(getActualDistance(originalRot, destinationRot)).to.eql(
+        result
+      );
+    });
+  });
+
+  describe("positive to negative: bigger than 360 diff", () => {
+    it("should be right ", () => {
+      const originalRot = 18.8496
+      const destinationRot = -1.5708;
+      const result = 20.4204;
+      expect(getActualDistance(originalRot, destinationRot)).to.eql(
+        result
+      );
+    });
+  });
+
   describe("0 to negative", () => {
     it("should be right ", () => {
       const originalRot = 0
-      const destinationRot = -4.71;
-      const result =4.71;
+      const destinationRot = -1.5708;
+      const result = 1.5708;
       expect(getActualDistance(originalRot, destinationRot)).to.eql(
         result
       );

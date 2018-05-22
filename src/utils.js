@@ -5,13 +5,14 @@ function getColStartingRadians(colNum) {
   //  starting at 90 degrees, each column tilt 20 degrees more
   const item = []
   for (let i = 0; i < colNum; i++) {
-    let increment = i * 20 + 90
-    // if (increment > 360) {
+    let increment = i * 20 + 90 + 360
+    // if (increment >= 720) {
     //   increment -= 360
     // }
     const rad = roundUnitToFourDecimals(degToRad(increment))
     item.push(rad)
   }
+  console.log(item)
   return item
 }
 
@@ -26,6 +27,20 @@ function getColStartingRadians(colNum) {
 // we solve these problems
 // 1. later columns won't be going for too long. the traveled distance won't be too much
 // 2. all moving will be at constant speed
+
+// NOW NOW NOW
+// Let's think about potential flaws of this solution ?????????????
+// Now the transition are very dependent on a few things
+// 1. starting radians
+// 2. column gap delay
+// Let's play with these two variables and see the best visual effect we can create
+// One possible bug:
+// 1. the estimate is just estimate
+// it's possible that there will be snaps for some numbers
+// if the est is -4.69, dest is -4.71, but it was already -4.72, so it will do a full loop in a very short time
+// what should we do?
+// incremenet the starting radians to big positive
+// test tmr
 
 function roundUnitToFourDecimals (unit) {
   return Math.round(unit * 10000) / 10000;

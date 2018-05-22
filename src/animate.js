@@ -19,14 +19,14 @@ import {
   roundUnitToFourDecimals
 } from './utils.js'
 
-const initialDuration = 10;
-const initialRotation = roundUnitToFourDecimals(Math.PI * 4)
+const initialDuration = 2;
+const initialRotation = roundUnitToFourDecimals(Math.PI * 2)
 const initialSpeed = initialRotation / initialDuration
 const transitionToDuration = 6
 const transitionToDelay = 0.08;
 const transitionToSpeed = Math.PI * 2 / transitionToDuration
 const boxesCollection = getBoxesCollections()
-const whenToTransition = 3
+const whenToTransition = 1
 // const animationTimeline = new TimelineMax()
 
 
@@ -74,7 +74,7 @@ function prepareForTransitionTo () {
   //   animateToGoal(transformedData, transformedCollections)
   // }, 4000)
   haha.add(startLoopingRotationsTest(), 0)
-  haha.add(animateToGoal(transformedData, transformedCollections), 8)
+  haha.add(animateToGoal(transformedData, transformedCollections), initial)
 
   // console.log(detailedDest)
   // console.log('-pure-')
@@ -137,9 +137,10 @@ function getActualDistance (originalRot, destinationRot) {
   let diff = Math.abs(destinationRot - originalRot)
   let compensatedOriginalRot = originalRot
   let loopCounter = 0
+  let ifMinus = originalRot > 0 ? -1 : 1
   while (diff >= fullCircle) {
     loopCounter++
-    compensatedOriginalRot += fullCircle
+    compensatedOriginalRot += fullCircle * ifMinus
     diff = Math.abs(destinationRot - compensatedOriginalRot);
   }
 
@@ -236,7 +237,7 @@ function startLoopingRotations() {
 // R-3
 function transitionToNumber() {
   // const current = new Date();
-  const current = new Date("Thu May 17 2018 13:06:12 GMT+0800 (CST)");
+  const current = new Date("Thu May 17 2018 14:47:12 GMT+0800 (CST)");
   const currentTimeArray = getTimeArray(current);
   const pureData = getDestsData(currentTimeArray);
   // const detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay)
@@ -297,6 +298,14 @@ function animateToGoal (data, collections) {
           useRadians: true
         },
         ease: Power0.easeNone
+        // onStart: function () {
+        //   if (index === 282) {
+        //     const item = collections[index].rotation.z
+        //     // check each column starting
+        //     console.log('--when i first started rotating--')
+        //     console.log(item)
+        //   }
+        // }
       }, delay
     )
   })
@@ -349,15 +358,35 @@ function animatePartsTo(data, boxes) {
   }
 }
 
-const columnDelay = 0.4;
 
+// to ensure that all columns initial are not too different > Math.PI * 2
+// too much time delay
+let columnDelay = 2;
+let finalColumn = initialSpeed * (columnDelay * 15 + whenToTransition)
+while (finalColumn >= initialRotation) {
+  columnDelay -= 0.2
+  finalColumn = initialSpeed * (columnDelay * 15 + whenToTransition);
+}
+console.log('-final column delay-')
+console.log(columnDelay)
+// delay should be smaller than
+// until the end column
+// no more than 360
+// whether it stays within the same circle depends on three factors
+// speed & columnDelay & whenToTransition
+
+
+// as long as the initial are good
+// when two columns don't differ too much suddenly
+// then the final effect will be smooth
 
 function generateInitialStartingPos () {
   const colStartingRadians = getColStartingRadians(16)
   // console.log(colStartingRadians)
   const initialStarting = colStartingRadians.map((element, index) => {
     const traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed
-    const result = element - traveledDistance
+    const remaining = traveledDistance % (initialRotation)
+    const result = element - remaining
     return result
   })
   // console.log('proabbly around here')
@@ -450,8 +479,8 @@ function updateDisplayTime(date) {
   const finalData = compareOriDest(prevData, data, transitionToDuration);
   // console.log('-dest-')
   // console.log(data)
-  // console.log('-prev-')
-  // console.log(prevData)
+  console.log('-final-')
+  console.log(finalData)
   const tl = animateToGoal(finalData, boxesCollection)
 
   setCurrentTimeline(tl)
@@ -476,7 +505,7 @@ function compareOriDest(original, destination, loopDuration, rootDelay = 0) {
   destination.forEach((destinationRot, counter) => {
     const originalRot = original[counter];
     const diff = Math.abs(destinationRot - originalRot);
-    const travelDistance = originalRot > destinationRot ? fullCircle - diff : diff;
+    const travelDistance = getActualDistance(originalRot, destinationRot)
     const isRightHalfBox = counter % 2 === 1 ? true : false;
     const duration = Math.round((travelDistance / speed) *  100) / 100
     let delay = Math.round(rootDelay * 100) / 100;

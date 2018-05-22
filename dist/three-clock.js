@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({7:[function(require,module,exports) {
+})({9:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
  * VERSION: 1.20.4
@@ -8050,7 +8050,7 @@ if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); } //necessary in case Tween
 		_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
 
 })((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenMax");
-},{}],8:[function(require,module,exports) {
+},{}],10:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49319,7 +49319,7 @@ exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
 exports.SceneUtils = SceneUtils;
 exports.LensFlare = LensFlare;
-},{}],5:[function(require,module,exports) {
+},{}],4:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -49332,13 +49332,14 @@ function getColStartingRadians(colNum) {
   //  starting at 90 degrees, each column tilt 20 degrees more
   var item = [];
   for (var i = 0; i < colNum; i++) {
-    var increment = i * 20 + 90;
-    // if (increment > 360) {
+    var increment = i * 20 + 90 + 360;
+    // if (increment >= 720) {
     //   increment -= 360
     // }
     var rad = roundUnitToFourDecimals(degToRad(increment));
     item.push(rad);
   }
+  console.log(item);
   return item;
 }
 
@@ -49353,6 +49354,20 @@ function getColStartingRadians(colNum) {
 // we solve these problems
 // 1. later columns won't be going for too long. the traveled distance won't be too much
 // 2. all moving will be at constant speed
+
+// NOW NOW NOW
+// Let's think about potential flaws of this solution ?????????????
+// Now the transition are very dependent on a few things
+// 1. starting radians
+// 2. column gap delay
+// Let's play with these two variables and see the best visual effect we can create
+// One possible bug:
+// 1. the estimate is just estimate
+// it's possible that there will be snaps for some numbers
+// if the est is -4.69, dest is -4.71, but it was already -4.72, so it will do a full loop in a very short time
+// what should we do?
+// incremenet the starting radians to big positive
+// test tmr
 
 function roundUnitToFourDecimals(unit) {
   return Math.round(unit * 10000) / 10000;
@@ -49521,7 +49536,7 @@ exports.getColStartingRadians = getColStartingRadians;
 exports.degToRad = degToRad;
 exports.getTimeArray = getTimeArray;
 exports.roundUnitToFourDecimals = roundUnitToFourDecimals;
-},{}],6:[function(require,module,exports) {
+},{}],7:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49677,7 +49692,7 @@ exports.getCurrentTimeline = getCurrentTimeline;
 exports.setCurrentTimeline = setCurrentTimeline;
 exports.getIsTabActive = getIsTabActive;
 exports.setIsTabActive = setIsTabActive;
-},{"./utils.js":5}],14:[function(require,module,exports) {
+},{"./utils.js":4}],8:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49766,7 +49781,7 @@ function getBoxesPositionsAlt(boxWidth, yGap, rows, columns) {
 // }
 
 exports.getBoxesPositionsAlt = getBoxesPositionsAlt;
-},{"./utils.js":5}],4:[function(require,module,exports) {
+},{"./utils.js":4}],6:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49898,7 +49913,7 @@ function render() {
 }
 
 exports.setUp = setUp;
-},{"three":8,"./store.js":6,"./notSure.js":14}],3:[function(require,module,exports) {
+},{"three":10,"./store.js":7,"./notSure.js":8}],5:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -49910,14 +49925,14 @@ var _store = require('./store.js');
 
 var _utils = require('./utils.js');
 
-var initialDuration = 10;
-var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 4);
+var initialDuration = 2;
+var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 2);
 var initialSpeed = initialRotation / initialDuration;
 var transitionToDuration = 6;
 var transitionToDelay = 0.08;
 var transitionToSpeed = Math.PI * 2 / transitionToDuration;
 var boxesCollection = (0, _store.getBoxesCollections)();
-var whenToTransition = 3;
+var whenToTransition = 1;
 // const animationTimeline = new TimelineMax()
 
 
@@ -49965,7 +49980,7 @@ function prepareForTransitionTo() {
   //   animateToGoal(transformedData, transformedCollections)
   // }, 4000)
   haha.add(startLoopingRotationsTest(), 0);
-  haha.add(animateToGoal(transformedData, transformedCollections), 8);
+  haha.add(animateToGoal(transformedData, transformedCollections), initial);
 
   // console.log(detailedDest)
   // console.log('-pure-')
@@ -50043,9 +50058,10 @@ function getActualDistance(originalRot, destinationRot) {
   var diff = Math.abs(destinationRot - originalRot);
   var compensatedOriginalRot = originalRot;
   var loopCounter = 0;
+  var ifMinus = originalRot > 0 ? -1 : 1;
   while (diff >= fullCircle) {
     loopCounter++;
-    compensatedOriginalRot += fullCircle;
+    compensatedOriginalRot += fullCircle * ifMinus;
     diff = Math.abs(destinationRot - compensatedOriginalRot);
   }
 
@@ -50157,7 +50173,7 @@ function startLoopingRotations() {
 // R-3
 function transitionToNumber() {
   // const current = new Date();
-  var current = new Date("Thu May 17 2018 13:06:12 GMT+0800 (CST)");
+  var current = new Date("Thu May 17 2018 14:47:12 GMT+0800 (CST)");
   var currentTimeArray = (0, _utils.getTimeArray)(current);
   var pureData = getDestsData(currentTimeArray);
   // const detailedData = generateDestinationsData(pureData, transitionToDuration, transitionToDelay)
@@ -50217,6 +50233,14 @@ function animateToGoal(data, collections) {
         useRadians: true
       },
       ease: Power0.easeNone
+      // onStart: function () {
+      //   if (index === 282) {
+      //     const item = collections[index].rotation.z
+      //     // check each column starting
+      //     console.log('--when i first started rotating--')
+      //     console.log(item)
+      //   }
+      // }
     }, delay);
   });
   return tl;
@@ -50258,14 +50282,34 @@ function animatePartsTo(data, boxes) {
   }
 }
 
-var columnDelay = 0.4;
+// to ensure that all columns initial are not too different > Math.PI * 2
+// too much time delay
+var columnDelay = 2;
+var finalColumn = initialSpeed * (columnDelay * 15 + whenToTransition);
+while (finalColumn >= initialRotation) {
+  columnDelay -= 0.2;
+  finalColumn = initialSpeed * (columnDelay * 15 + whenToTransition);
+}
+console.log('-final column delay-');
+console.log(columnDelay);
+// delay should be smaller than
+// until the end column
+// no more than 360
+// whether it stays within the same circle depends on three factors
+// speed & columnDelay & whenToTransition
+
+
+// as long as the initial are good
+// when two columns don't differ too much suddenly
+// then the final effect will be smooth
 
 function generateInitialStartingPos() {
   var colStartingRadians = (0, _utils.getColStartingRadians)(16);
   // console.log(colStartingRadians)
   var initialStarting = colStartingRadians.map(function (element, index) {
     var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
-    var result = element - traveledDistance;
+    var remaining = traveledDistance % initialRotation;
+    var result = element - remaining;
     return result;
   });
   // console.log('proabbly around here')
@@ -50351,8 +50395,8 @@ function updateDisplayTime(date) {
   var finalData = compareOriDest(prevData, data, transitionToDuration);
   // console.log('-dest-')
   // console.log(data)
-  // console.log('-prev-')
-  // console.log(prevData)
+  console.log('-final-');
+  console.log(finalData);
   var tl = animateToGoal(finalData, boxesCollection);
 
   (0, _store.setCurrentTimeline)(tl);
@@ -50378,7 +50422,7 @@ function compareOriDest(original, destination, loopDuration) {
   destination.forEach(function (destinationRot, counter) {
     var originalRot = original[counter];
     var diff = Math.abs(destinationRot - originalRot);
-    var travelDistance = originalRot > destinationRot ? fullCircle - diff : diff;
+    var travelDistance = getActualDistance(originalRot, destinationRot);
     var isRightHalfBox = counter % 2 === 1 ? true : false;
     var duration = Math.round(travelDistance / speed * 100) / 100;
     var delay = Math.round(rootDelay * 100) / 100;
@@ -50436,7 +50480,7 @@ exports.plusOne = plusOne;
 exports.compareOriDest = compareOriDest;
 exports.updateDisplayTime = updateDisplayTime;
 exports.getActualDistance = getActualDistance;
-},{"./store.js":6,"./utils.js":5}],2:[function(require,module,exports) {
+},{"./store.js":7,"./utils.js":4}],2:[function(require,module,exports) {
 'use strict';
 
 var _gsap = require('gsap');
@@ -50459,6 +50503,7 @@ var _store = require('./src/store.js');
 function prepareUpdates() {
   // const masterTimeline = getCurrentTimeline()
   attachIncrementListener();
+
   installVisibilityListener();
 
   var ONE_MINUTE = 60000;
@@ -50549,7 +50594,7 @@ function repeatEvery(func, interval) {
   // Delay execution until it's an even interval
   setTimeout(start, delay);
 }
-},{"gsap":7,"./src/draw.js":4,"./src/animate.js":3,"./src/utils.js":5,"./src/store.js":6}],50:[function(require,module,exports) {
+},{"gsap":9,"./src/draw.js":6,"./src/animate.js":5,"./src/utils.js":4,"./src/store.js":7}],15:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50571,7 +50616,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '62060' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '61097' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -50672,5 +50717,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[50,2])
+},{}]},{},[15,2])
 //# sourceMappingURL=/dist/three-clock.map
