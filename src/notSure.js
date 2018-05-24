@@ -36,6 +36,13 @@ function getBoxesPositionsAlt(boxWidth, yGap, rows, columns) {
   return positions
 }
 
+export {
+  getBoxesPositionsAlt
+
+}
+
+
+
 // // unit checked. R-3
 // function getBoxesPositions(boxWidth, yGap, columns) {
 //   const positions = []
@@ -80,8 +87,3 @@ function getBoxesPositionsAlt(boxWidth, yGap, rows, columns) {
 //   }
 //   return positionsForThisColumn
 // }
-
-export {
-  getBoxesPositionsAlt
-
-}

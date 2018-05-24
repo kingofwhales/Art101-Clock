@@ -12,7 +12,7 @@ function getColStartingRadians(colNum) {
     const rad = roundUnitToFourDecimals(degToRad(increment))
     item.push(rad)
   }
-  console.log(item)
+  // console.log(item)
   return item
 }
 

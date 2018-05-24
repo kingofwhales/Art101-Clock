@@ -5,13 +5,9 @@ import {
 } from './store.js'
 
 import {
-  getBoxesPositions,
-  getBoxesPositionsAlt
-} from './notSure.js'
+  getColStartingRadians
+} from './utils.js'
 
-// ????????unsure section
-// ????????unsure section
-// ????????unsure section
 const width = window.innerWidth;
 const height = window.innerHeight;
 const scene = new THREE.Scene();
@@ -19,14 +15,13 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 const camera = new THREE.PerspectiveCamera(70, width / height, 0.001, 1500);
 const boxWidth = Math.floor(width / 70)
 const yGap = Math.floor(height / 12)
-
 const rows = 6
 const columns = 16
 const boxesPositions = getBoxesPositionsAlt(boxWidth, yGap, rows, columns)
 
 
 // unit checked
-function setUp() {
+function prepareBoard() {
   createScene();
   createLight();
   createPlane();
@@ -95,6 +90,37 @@ function createBoxes() {
   return boxesCollection
 }
 
+// unit wise. impossible to understand
+function getBoxesPositionsAlt(boxWidth, yGap, rows, columns) {
+  const positions = []
+  const colStartingRadians = getColStartingRadians(columns)
+  const unitsPerColumns = rows * 2
+  const totalUnits = columns * unitsPerColumns
+  const xLeftestPos = -(columns * 2 * boxWidth + (columns - 1) * boxWidth) / 2 + 1 / 2 * boxWidth
+  const yTopPos = ((rows - 1) / 2) * yGap
+  let counter = 0
+  while (counter < totalUnits) {
+    const columnNumber = Math.floor(counter / unitsPerColumns)
+    const unitNumberInCurrentColumn = counter % unitsPerColumns
+    const dividend = unitNumberInCurrentColumn % 2
+    const rowNumber = Math.floor(unitNumberInCurrentColumn / 2)
+    const currentColumnRadians = colStartingRadians[columnNumber]
+    const offsetToRight = dividend === 0 ? -1 : 1
+    const translationsDistances = boxWidth / 2
+    const translationsVector = translationsDistances * offsetToRight
+    const xPos = xLeftestPos + dividend * boxWidth + columnNumber * 3 * boxWidth - translationsVector
+    const yPos = yTopPos - rowNumber * yGap;
+    positions.push({
+      xPos,
+      yPos,
+      translation: translationsVector,
+      radians: currentColumnRadians
+    })
+    counter++
+  }
+  return positions
+}
+
 // unit checked
 function render() {
   requestAnimationFrame(render);
@@ -103,5 +129,5 @@ function render() {
 
 
 export {
-  setUp
+  prepareBoard
 }
