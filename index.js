@@ -4,13 +4,13 @@ import {
 
 import {
   prepareAnimation
-} from './src/animate.js'
+} from './src/transition.js'
 
 import {
-  prepareUpdates
-} from './src/update.js'
+  prepareWatchers
+} from './src/watcher.js'
 
 
 prepareBoard()
 prepareAnimation()
-prepareUpdates()
+prepareWatchers()

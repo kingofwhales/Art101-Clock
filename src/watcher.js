@@ -7,15 +7,17 @@ import {
 } from './store.js'
 
 import {
-  plusOne,
   updateDisplayTime
-} from './animate.js'
+} from './transition.js'
 
+import {
+  getPlusOneTime
+} from './utils.js'
 
-function prepareUpdates() {
-  attachIncrementListener();
-  installVisibilityListener();
-  updateEveryMinuteOnTime()
+function prepareWatchers() {
+  attachIncrementListener(); // plus one
+  installVisibilityListener(); // visible gain update
+  updateEveryMinuteOnTime() // on the clock update
 }
 
 function updateEveryMinuteOnTime () {
@@ -24,20 +26,19 @@ function updateEveryMinuteOnTime () {
 }
 
 // why is directly exporting not undefined?
+// plus one part. own logic to get plus one, then pass it to final decision point
 function attachIncrementListener() {
   const btn = document.getElementsByClassName('increment')[0]
-  btn.addEventListener("click", function () {
-    const masterTimeline = getCurrentTimeline()
-    if (!masterTimeline.isActive()) {
-      console.log('-not active-')
-      console.log(masterTimeline)
-      plusOne()
-    } else {
-      console.log('-active-')
-    }
-  })
+  btn.addEventListener("click", plusOne, false)
 }
 
+function plusOne () {
+  const time = getPrevTime()
+  const plusOneMinuteTime = getPlusOneTime(time)
+  isTimelineFreeForUpdates(plusOneMinuteTime)
+}
+
+// visiblity part, own logic to check if time has changed when it becomes visible again. then pass it to final decision point
 function installVisibilityListener() {
   // Warn if the browser doesn't support addEventListener or the Page Visibility API
   if (
@@ -66,33 +67,15 @@ function handleVisibilityChange() {
 function checkTimeCorrect() {
   const date = new Date();
   const prevTime = getPrevTime() || new Date("Thu May 17 1988 17:43:08 GMT+0800 (CST)");
-  const tl = getCurrentTimeline()
-  const ifTimeChanged = date.getHours() !== prevTime.getHours() ||
+  const isTimeDifferent = date.getHours() !== prevTime.getHours() ||
     date.getMinutes() !== prevTime.getMinutes()
-  if (!tl.isActive() && ifTimeChanged) {
-    setPrevTime(date);
-    updateDisplayTime(date);
-  } else {
-    console.log('not gonna update')
+  if (isTimeDifferent) {
+    isTimelineFreeForUpdates(date)
   }
 }
 
-function updateToCurrentTime() {
-  const tl = getCurrentTimeline()
-  const isTabActive = getIsTabActive()
-  // console.log('-checking intervals-')
-  console.log(tl.isActive())
-  console.log(isTabActive)
-  if (!tl.isActive() && isTabActive) {
-    // console.log("---actually updating---")
-    let date = new Date()
-    setPrevTime(date)
-    updateDisplayTime(date)
-  }
-}
-
-
-
+//  repeat every minute part
+// pass date to final decision point
 function repeatEvery(func, interval) {
   const now = new Date()
   const delay = interval - now % interval
@@ -105,9 +88,25 @@ function repeatEvery(func, interval) {
 
 
 
+function updateToCurrentTime() {
+  const date = new Date();
+  isTimelineFreeForUpdates(date);
+}
+
+// final decision point
+function isTimelineFreeForUpdates(date) {
+  const tl = getCurrentTimeline()
+  const isTabActive = getIsTabActive()
+  if (tl.isActive() === false && isTabActive) {
+    updateDisplayTime(date)
+  }
+}
+
+
+
 
 
 
 export {
-  prepareUpdates
+  prepareWatchers
 }

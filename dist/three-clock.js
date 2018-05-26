@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({10:[function(require,module,exports) {
+})({11:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41340,13 +41340,15 @@ exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
 exports.SceneUtils = SceneUtils;
 exports.LensFlare = LensFlare;
-},{}],4:[function(require,module,exports) {
+},{}],9:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
+// everything in this module will only depend on the input arguments
+// no other dependents
+// pure
 
 // this is pure and predictable with the same arguments
 function getColStartingRadians(colNum) {
@@ -41364,34 +41366,29 @@ function getColStartingRadians(colNum) {
   return item;
 }
 
-// what did we do eventually?
-//  1. first of all, we make the starting radians all positive, from small to big
-// because in this way, during transition and delay, the later columns won't be too negative, and thus
-// distance won't be too much
-// 2. we are estimating the possible location when it first starts animating
-// then calculate distance, duration, delay
-// then animate based on that
-// with these few solutions
-// we solve these problems
-// 1. later columns won't be going for too long. the traveled distance won't be too much
-// 2. all moving will be at constant speed
+// R-3
+function getPlusOneTime(prevTime) {
+  var date = prevTime || new Date();
+  date.setMinutes(date.getMinutes() + 1);
+  return date;
+}
 
-// NOW NOW NOW
-// Let's think about potential flaws of this solution ?????????????
-// Now the transition are very dependent on a few things
-// 1. starting radians
-// 2. column gap delay
-// Let's play with these two variables and see the best visual effect we can create
-// One possible bug:
-// 1. the estimate is just estimate
-// it's possible that there will be snaps for some numbers
-// if the est is -4.69, dest is -4.71, but it was already -4.72, so it will do a full loop in a very short time
-// what should we do?
-// incremenet the starting radians to big positive
-// test tmr
+// unit cheked R-3
+function convertToRad(data) {
+  return data.map(function (element) {
+    return degToRad(element);
+  });
+}
 
 function roundUnitToFourDecimals(unit) {
   return Math.round(unit * 10000) / 10000;
+}
+
+// unit cheked R-3
+function roundToFourDecimals(data) {
+  return data.map(function (element) {
+    return Math.round(element * 10000) / 10000;
+  });
 }
 
 // unit checked R-2
@@ -41409,10 +41406,6 @@ function getTimeArray(date) {
 // this is pure and predictable
 function degToRad(deg) {
   return deg * Math.PI / 180;
-}
-
-function radToDeg(rad) {
-  return rad * 180 / Math.PI;
 }
 
 function combine(red, black) {
@@ -41451,112 +41444,196 @@ function combine(red, black) {
 
   return newArray;
 }
-//  refactor shortest and compare and ...... test fully?!
 
-//  write a test first 
-function compareOriDest(ori, dest, loopDuration, useRadians) {
-  var counter = 0;
-  var result = [];
-  var rotations = useRadians ? 6.28319 : 360;
-  var speed = rotations / loopDuration;
-  var delay = loopDuration / 4;
-  var difference = useRadians ? 2.1 : 120;
-  var length = ori.length;
-
-  while (counter < length) {
-    var item = {};
-    item.dest = dest[counter];
-    item.ori = ori[counter];
-    var tempDiff = void 0;
-    if (ori[counter] > dest[counter]) {
-      tempDiff = rotations - Math.abs(dest[counter] - ori[counter]);
-    } else {
-      tempDiff = Math.abs(dest[counter] - ori[counter]);
-    }
-    item.diff = tempDiff;
-    item.duration = tempDiff / speed;
-
-    var current = void 0,
-        prev = void 0,
-        whetherStraight = void 0;
-    if (counter % 2 === 0) {
-      item.delay = 0;
-    } else {
-      current = ori[counter] + rotations / 2;
-      prev = ori[counter - 1];
-      whetherStraight = Math.abs(Math.abs(current - prev) - rotations / 2);
-      if (whetherStraight < 0.1) {
-        item.delay = 0;
-      } else {
-        item.delay = delay;
-      }
-    }
-
-    result.push(item);
-    counter++;
-  }
-  // console.log(result)
-  return result;
+// unit cheked R-3
+function flattenData(data) {
+  return data.reduce(function (accu, value) {
+    return accu.concat(value);
+  }, []);
 }
 
-//  how the fuck do we rewrite this func?
-//  neg: solved by simply adding - before rotation and not messing with the original data
-//  compare the original ones without compensating 360?
-//  get shortest
-//  calc duration
-function getShortestDestsClockwise() {}
-
-// this shit will have to be refactored. impossible to understand . 0 readibility.
-function getShortestClockwiseDest(originals, destinations, useRadians) {
-  var length = originals.length;
-  var offset = useRadians ? 3.14159 : 180;
-  // let full = useRadians ? 6.28319 : 360
-  var i = 0;
-  var newDestination = [];
-  while (i < length) {
-    var leftOriginal = originals[i];
-    var rightOriginal = originals[i + 1];
-    var leftDestination = destinations[i];
-    var rightDestination = destinations[i + 1];
-
-    // alternative routes to go to destinations
-    var swapLeftDestination = rightDestination >= offset ? rightDestination - offset : rightDestination + offset;
-    var swapRightDestination = leftDestination >= offset ? leftDestination - offset : leftDestination + offset;
-
-    // same rule for calculating degrees to go 
-    var diffRegularCommon = leftDestination >= leftOriginal ? leftDestination - leftOriginal : 2 * offset - (leftOriginal - leftDestination);
-    var diffRegularRed = rightDestination >= rightOriginal ? rightDestination - rightOriginal : 2 * offset - (rightOriginal - rightDestination);
-    var diffSwapCommon = swapLeftDestination >= leftOriginal ? swapLeftDestination - leftOriginal : 2 * offset - (leftOriginal - swapLeftDestination);
-    var diffSwapRed = swapRightDestination >= rightOriginal ? swapRightDestination - rightOriginal : 2 * offset - (rightOriginal - swapRightDestination);
-    var diffRegular = diffRegularCommon + diffRegularRed;
-    var diffSwap = diffSwapCommon + diffSwapRed;
-
-    if (diffSwap < diffRegular) {
-      newDestination.push(swapLeftDestination);
-      newDestination.push(swapRightDestination);
-    } else {
-      newDestination.push(leftDestination);
-      newDestination.push(rightDestination);
-    }
-    i += 2;
-  }
-  return newDestination;
+function roundUnitToTwoDecimals(number) {
+  return Math.round(number * 100) / 100;
 }
 
-// work with negative and outside 360
+function getActualDistance(originalRot, destinationRot) {
+  var fullCircle = Math.PI * 2;
+  var diff = Math.abs(destinationRot - originalRot);
+  var compensatedOriginalRot = originalRot;
+  var loopCounter = 0;
+  var ifMinus = originalRot > 0 ? -1 : 1;
+  while (diff >= fullCircle) {
+    loopCounter++;
+    compensatedOriginalRot += fullCircle * ifMinus;
+    diff = Math.abs(destinationRot - compensatedOriginalRot);
+  }
 
-// function arrayPlusOne (array) {
+  var dis = destinationRot > originalRot ? fullCircle - diff : diff;
+  var realDistance = loopCounter * fullCircle + dis;
+  // const realDistance = diff
+  return roundUnitToFourDecimals(realDistance);
+}
+
+// not sure
+// not sure
+
+//right now, we are figuring out utils, process, and transition.
+// data processing and small utilities functions?
+// how can we call this organized? a certain structure to adhere to?
+
+
+exports.combine = combine;
+exports.getColStartingRadians = getColStartingRadians;
+exports.getTimeArray = getTimeArray;
+exports.roundUnitToFourDecimals = roundUnitToFourDecimals;
+exports.roundToFourDecimals = roundToFourDecimals;
+exports.convertToRad = convertToRad;
+exports.flattenData = flattenData;
+exports.roundUnitToTwoDecimals = roundUnitToTwoDecimals;
+exports.getActualDistance = getActualDistance;
+exports.getPlusOneTime = getPlusOneTime;
+
+// what did we do eventually?
+//  1. first of all, we make the starting radians all positive, from small to big
+// because in this way, during transition and delay, the later columns won't be too negative, and thus
+// distance won't be too much
+// 2. we are estimating the possible location when it first starts animating
+// then calculate distance, duration, delay
+// then animate based on that
+// with these few solutions
+// we solve these problems
+// 1. later columns won't be going for too long. the traveled distance won't be too much
+// 2. all moving will be at constant speed
+
+// NOW NOW NOW
+// Let's think about potential flaws of this solution ?????????????
+// Now the transition are very dependent on a few things
+// 1. starting radians
+// 2. column gap delay
+// Let's play with these two variables and see the best visual effect we can create
+// One possible bug:
+// 1. the estimate is just estimate
+// it's possible that there will be snaps for some numbers
+// if the est is -4.69, dest is -4.71, but it was already -4.72, so it will do a full loop in a very short time
+// what should we do?
+// incremenet the starting radians to big positive
+// test tmr
+// function radToDeg(rad) {
+//   return rad * 180 / Math.PI;
+// }
+
+// function combine(red, black) {
+//   if (red.length !== black.length) {
+//     throw "two arrays have different length";
+//   }
+//   let newArray = [];
+//   let counter = 0;
+//   for (let i of red) {
+//     newArray.push(-i);
+//     newArray.push(-black[counter]);
+//     counter++;
+//   }
+//   // console.log(newArray)
+//   return newArray;
+// }
+// //  refactor shortest and compare and ...... test fully?!
+
+// //  write a test first 
+// function compareOriDest(ori, dest, loopDuration, useRadians) {
+//   let counter = 0
+//   let result = []
+//   let rotations = useRadians ? 6.28319 : 360
+//   let speed = rotations / loopDuration
+//   let delay = loopDuration / 4
+//   let difference = useRadians ? 2.1 : 120
+//   let length = ori.length
+
+//   while (counter < length) {
+//     let item = {}
+//     item.dest = dest[counter]
+//     item.ori = ori[counter]
+//     let tempDiff
+//     if (ori[counter] > dest[counter]) {
+//       tempDiff = rotations - Math.abs(dest[counter] - ori[counter]);
+//     } else {
+//       tempDiff = Math.abs(dest[counter] - ori[counter]);
+//     }
+//     item.diff = tempDiff
+//     item.duration = tempDiff / speed
+
+//     let current, prev, whetherStraight
+//     if (counter % 2 === 0) {
+//       item.delay = 0
+//     } else {
+//       current = ori[counter] + rotations / 2;
+//       prev = ori[counter - 1]
+//       whetherStraight = Math.abs((Math.abs(current - prev) - rotations / 2))
+//       if (whetherStraight < 0.1) {
+//         item.delay = 0
+//       } else {
+//         item.delay = delay
+//       }
+//     }
+
+//     result.push(item)
+//     counter++
+//   }
+//   // console.log(result)
+//   return result
+// }
+
+// //  how the fuck do we rewrite this func?
+// //  neg: solved by simply adding - before rotation and not messing with the original data
+// //  compare the original ones without compensating 360?
+// //  get shortest
+// //  calc duration
+// function getShortestDestsClockwise() {
 
 // }
 
-exports.radToDeg = radToDeg;
-exports.combine = combine;
-exports.getShortestClockwiseDest = getShortestClockwiseDest;
-exports.compareOriDest = compareOriDest;
-exports.getColStartingRadians = getColStartingRadians;
-exports.degToRad = degToRad;
-exports.getTimeArray = getTimeArray;
-exports.roundUnitToFourDecimals = roundUnitToFourDecimals;
+// // this shit will have to be refactored. impossible to understand . 0 readibility.
+// function getShortestClockwiseDest(originals, destinations, useRadians) {
+//   let length = originals.length;
+//   let offset = useRadians ? 3.14159 : 180;
+//   // let full = useRadians ? 6.28319 : 360
+//   let i = 0
+//   let newDestination = [];
+//   while (i < length) {
+//     let leftOriginal = originals[i];
+//     let rightOriginal = originals[i + 1];
+//     let leftDestination = destinations[i];
+//     let rightDestination = destinations[i + 1];
+
+//     // alternative routes to go to destinations
+//     let swapLeftDestination = rightDestination >= offset ? rightDestination - offset : rightDestination + offset;
+//     let swapRightDestination =
+//       leftDestination >= offset ? leftDestination - offset : leftDestination + offset;
+
+//     // same rule for calculating degrees to go 
+//     let diffRegularCommon = leftDestination >= leftOriginal ? leftDestination - leftOriginal : 2 * offset - (leftOriginal - leftDestination);
+//     let diffRegularRed = rightDestination >= rightOriginal ? rightDestination - rightOriginal : 2 * offset - (rightOriginal - rightDestination);
+//     let diffSwapCommon = swapLeftDestination >= leftOriginal ? swapLeftDestination - leftOriginal : 2 * offset - (leftOriginal - swapLeftDestination);
+//     let diffSwapRed = swapRightDestination >= rightOriginal ? swapRightDestination - rightOriginal : 2 * offset - (rightOriginal - swapRightDestination);
+//     let diffRegular = diffRegularCommon + diffRegularRed
+//     let diffSwap = diffSwapCommon + diffSwapRed
+
+//     if (diffSwap < diffRegular) {
+//       newDestination.push(swapLeftDestination);
+//       newDestination.push(swapRightDestination);
+//     } else {
+//       newDestination.push(leftDestination);
+//       newDestination.push(rightDestination);
+//     }
+//     i += 2;
+//   }
+//   return newDestination
+// }
+
+// // work with negative and outside 360
+
+// // function arrayPlusOne (array) {
+
+// // }
 },{}],7:[function(require,module,exports) {
 'use strict';
 
@@ -41713,7 +41790,7 @@ exports.getCurrentTimeline = getCurrentTimeline;
 exports.setCurrentTimeline = setCurrentTimeline;
 exports.getIsTabActive = getIsTabActive;
 exports.setIsTabActive = setIsTabActive;
-},{"./utils.js":4}],6:[function(require,module,exports) {
+},{"./utils.js":9}],4:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41872,7 +41949,7 @@ function render() {
 }
 
 exports.prepareBoard = prepareBoard;
-},{"three":10,"./store.js":7,"./utils.js":4}],17:[function(require,module,exports) {
+},{"three":11,"./store.js":7,"./utils.js":9}],10:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
  * VERSION: 1.20.4
@@ -49851,147 +49928,18 @@ if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); } //necessary in case Tween
 		_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
 
 })((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenMax");
-},{}],5:[function(require,module,exports) {
-'use strict';
+},{}],8:[function(require,module,exports) {
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.plusOne = exports.updateDisplayTime = exports.prepareAnimation = undefined;
+exports.animateToGoal = exports.startLoopingRotations = undefined;
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-var _gsap = require('gsap');
-
-var _store = require('./store.js');
-
-var _utils = require('./utils.js');
-
-var initialDuration = 2;
-var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 2);
-var initialSpeed = initialRotation / initialDuration;
-var transitionToDuration = 1;
-var transitionToDelay = 0.08;
-var transitionToSpeed = Math.PI * 2 / transitionToDuration;
-var boxesCollection = (0, _store.getBoxesCollections)();
-var whenToTransition = 3;
-var columnDelay = 0.4;
-// const animationTimeline = new TimelineMax()
-
-
-// R-3
-function prepareAnimation() {
-  var masterTL = new _gsap.TimelineMax();
-
-  var _prepareData = prepareData(),
-      _prepareData2 = _slicedToArray(_prepareData, 2),
-      data = _prepareData2[0],
-      collections = _prepareData2[1];
-
-  masterTL.add(startLoopingRotations(boxesCollection), 0);
-  masterTL.add(animateToGoal(data, collections), whenToTransition);
-
-  (0, _store.setCurrentTimeline)(masterTL);
-}
-// this function is quite a handful
-// 1. it gets the time for when the animation will start
-//    then get the array for it
-//    then get the data for it
-
-// 2. then it gets the estimated starting pos for all columns' lines
-
-// 3. then it compare the start and end to get more detailed destination info
-
-// 4. then it transform the data and the collections
-
-// R - 3 
-function prepareData() {
-  var pureData = getDataWithTime();
-  var initialStarting = getEstimatedStartingPos();
-  var detailedData = generateDestinationsDataInitial(initialStarting, pureData, transitionToDuration);
-  // CONTEXT: Why do we have to tranform here?
-  // Reason: Because the difference between original and destination might be more than a full loop
-  // Imagine this: (-810, -810) to (-360, -90) . directly animating these will result in one box moving a lot more distance
-  // it's better to animte both to -360, and then simply add 90 degrees
-  var transformedData = transformDataStructureForTransitionTo(detailedData, true);
-  var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
-  return [transformedData, transformedCollections];
-}
-
-function getEstimatedStartingPos() {
-  var initialStarting = generateInitialStartingPos();
-  return initialStarting.reduce(function (accu, element) {
-    return accu.concat(Array(12).fill(element));
-  }, []);
-}
-function getDataWithTime() {
-  // let current = new Date();
-  var current = new Date("Thu May 17 2018 08:47:59 GMT+0800 (CST)");
-  current.setSeconds(current.getSeconds() + whenToTransition);
-  var currentTimeArray = (0, _utils.getTimeArray)(current);
-  var pureData = getDestsData(currentTimeArray);
-  (0, _store.setPrevTime)(current);
-  (0, _store.setCurrentDisplayData)(pureData);
-
-  return pureData;
-}
-
-function getActualDistance(originalRot, destinationRot) {
-  var fullCircle = Math.PI * 2;
-  var diff = Math.abs(destinationRot - originalRot);
-  var compensatedOriginalRot = originalRot;
-  var loopCounter = 0;
-  var ifMinus = originalRot > 0 ? -1 : 1;
-  while (diff >= fullCircle) {
-    loopCounter++;
-    compensatedOriginalRot += fullCircle * ifMinus;
-    diff = Math.abs(destinationRot - compensatedOriginalRot);
-  }
-
-  var dis = destinationRot > originalRot ? fullCircle - diff : diff;
-  var realDistance = loopCounter * fullCircle + dis;
-  // const realDistance = diff
-  return (0, _utils.roundUnitToFourDecimals)(realDistance);
-}
-
-function generateDestinationsDataInitial(original, destination, loopDuration) {
-  var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
-
-  var result = [];
-  var fullCircle = Math.PI * 2;
-  var speed = fullCircle / loopDuration;
-  destination.forEach(function (destinationRot, counter, array) {
-    if (counter % 12 === 0 && counter != 0) {
-      rootDelay += columnDelay;
-    }
-    var originalRot = original[counter];
-    var travelDistance = getActualDistance(originalRot, destinationRot);
-    var prevDestinationRot = array[counter - 1];
-    var isRightHalfBox = counter % 2 === 1 ? true : false;
-    var destIsSame = destinationRot === prevDestinationRot;
-    var duration = roundUnitToTwoDecimals(travelDistance / speed);
-    var delay = roundUnitToTwoDecimals(rootDelay);
-    if (!destIsSame && isRightHalfBox) {
-      delay += result[counter - 1].duration;
-      duration = fullCircle / 4 / speed;
-    }
-    result.push({
-      delay: delay,
-      duration: duration,
-      travelDistance: travelDistance,
-      destination: destinationRot,
-      original: originalRot
-    });
-  });
-  return result;
-}
-
-function roundUnitToTwoDecimals(number) {
-  return Math.round(number * 100) / 100;
-}
+var _gsap = require("gsap");
 
 // R-2
-function startLoopingRotations() {
+function startLoopingRotations(boxesCollection, initialDuration) {
   var tl = new _gsap.TimelineMax();
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
@@ -50002,8 +49950,7 @@ function startLoopingRotations() {
       var i = _step.value;
 
       tl.to(i.rotation, initialDuration, {
-        // the actual z will always be from 0 -> -6.28
-        z: "-=" + initialRotation,
+        z: "-=6.2832",
         ease: Power0.easeNone,
         repeat: -1
       }, 0);
@@ -50025,24 +49972,8 @@ function startLoopingRotations() {
 
   return tl;
 }
-// R - 3
-// T - 3
-function transformDataStructureForTransitionTo(data, duplicateFirst) {
-  // because of how transitionToNumber transition the elements
-  // left, left, right.  left left right. etc
-  // We are modifying the structure to make the animate func more readable
-  return data.reduce(function (accu, value, index) {
-    var isFirstElement = index % 2 === 0;
-    if (isFirstElement === duplicateFirst) {
-      accu.push(value, value);
-    } else {
-      accu.push(value);
-    }
-    return accu;
-  }, []);
-}
 
-// R - 3
+// R - 2
 function animateToGoal(data, collections) {
   var tl = new _gsap.TimelineMax();
   data.forEach(function (element, index) {
@@ -50068,70 +49999,50 @@ function animateToGoal(data, collections) {
   return tl;
 }
 
-function generateInitialStartingPos() {
-  var colStartingRadians = (0, _utils.getColStartingRadians)(16);
-  // console.log(colStartingRadians)
-  return colStartingRadians.map(function (element, index) {
-    var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
-    var remaining = traveledDistance % initialRotation;
-    var result = element - remaining;
-    return result;
-  });
-  // console.log('proabbly around here')
-  // console.log(initialStarting)
-  // console.log(initialStarting)
-  // console.log(initi)
-  // return initialStarting
-}
+exports.startLoopingRotations = startLoopingRotations;
+exports.animateToGoal = animateToGoal;
+},{"gsap":10}],3:[function(require,module,exports) {
+'use strict';
 
-function plusOne() {
-  var date = getPlusOneTime();
-  (0, _store.setPrevTime)(date);
-  updateDisplayTime(date);
-}
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.updateDisplayTime = exports.prepareAnimation = undefined;
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _gsap = require('gsap');
+
+var _store = require('./store.js');
+
+var _animate = require('./animate.js');
+
+var _utils = require('./utils.js');
+
+var initialDuration = 2;
+var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 2);
+var initialSpeed = initialRotation / initialDuration;
+var transitionToDuration = 1;
+var transitionToDelay = 0.08;
+var transitionToSpeed = Math.PI * 2 / transitionToDuration; //necessary?
+var boxesCollection = (0, _store.getBoxesCollections)();
+var whenToTransition = 3;
+var columnDelay = 0.4;
+// const animationTimeline = new TimelineMax()
+
 
 // R-3
-function getPlusOneTime() {
-  var date = (0, _store.getPrevTime)() || new Date();
-  date.setMinutes(date.getMinutes() + 1);
-  return date;
-}
+function prepareAnimation() {
+  var _prepareData = prepareData(),
+      _prepareData2 = _slicedToArray(_prepareData, 2),
+      data = _prepareData2[0],
+      collections = _prepareData2[1];
 
-// unit cheked R-3
-function getDestsData(currentNumber) {
-  var data = void 0;
-  data = (0, _store.getData)();
-  data = extractNumberAllData(currentNumber, data);
-  data = flattenData(data);
-  data = convertToRad(data);
-  data = roundToFourDecimals(data);
-  return data;
-}
+  var masterTL = new _gsap.TimelineMax();
+  (0, _store.setCurrentTimeline)(masterTL);
 
-// unit cheked R-3
-function extractNumberAllData(array, data) {
-  return [data[array[0]].all, data[array[1]].all, data[array[2]].all, data[array[3]].all];
-}
-
-// unit cheked R-3
-function roundToFourDecimals(data) {
-  return data.map(function (element) {
-    return Math.round(element * 10000) / 10000;
-  });
-}
-
-// unit cheked R-3
-function flattenData(data) {
-  return data.reduce(function (accu, value) {
-    return accu.concat(value);
-  }, []);
-}
-
-// unit cheked R-3
-function convertToRad(data) {
-  return data.map(function (element) {
-    return (0, _utils.degToRad)(element);
-  });
+  masterTL.add((0, _animate.startLoopingRotations)(boxesCollection, initialDuration), 0);
+  masterTL.add((0, _animate.animateToGoal)(data, collections), whenToTransition);
 }
 
 //WHAT does this do?
@@ -50145,19 +50056,89 @@ function updateDisplayTime(date) {
   // console.log(data)
   // console.log('-final-')
   // console.log(finalData)
-  var tl = animateToGoal(finalData, boxesCollection);
+  var tl = (0, _animate.animateToGoal)(finalData, boxesCollection);
 
   (0, _store.setCurrentTimeline)(tl);
+  (0, _store.setPrevTime)(date);
   (0, _store.setCurrentDisplayData)(data);
 }
 
-// rewrite compar ori and dest so we can reuse the animateToGoal func
-// write a test for this then
-// 34 lines ... huh.....
-// refactor?
-// R-3
-// T-3
+// kind sure
+// kinda sure
 
+
+///// not so sure part
+///// not so sure part
+///// not so sure part
+///// not so sure part
+///// not so sure part
+///// not so sure part
+
+// R - 3 
+function prepareData() {
+  var pureData = getDataWithTime();
+  var initialStarting = getEstimatedStartingPos();
+  var detailedData = generateDestinationsDataInitial(initialStarting, pureData, transitionToDuration);
+  var transformedData = transformDataStructureForTransitionTo(detailedData, true);
+  var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
+  return [transformedData, transformedCollections];
+}
+
+function getEstimatedStartingPos() {
+  var initialStarting = generateInitialStartingPos();
+  return initialStarting.reduce(function (accu, element) {
+    return accu.concat(Array(12).fill(element));
+  }, []);
+}
+
+function getDataWithTime() {
+  // let current = new Date();
+  var current = new Date("Thu May 17 2018 08:47:59 GMT+0800 (CST)");
+  current.setSeconds(current.getSeconds() + whenToTransition);
+  var currentTimeArray = (0, _utils.getTimeArray)(current);
+  var pureData = getDestsData(currentTimeArray);
+  (0, _store.setPrevTime)(current);
+  (0, _store.setCurrentDisplayData)(pureData);
+
+  return pureData;
+}
+
+function generateDestinationsDataInitial(original, destination, loopDuration) {
+  var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+
+  var result = [];
+  var fullCircle = Math.PI * 2;
+  var speed = fullCircle / loopDuration;
+  destination.forEach(function (destinationRot, counter, array) {
+    if (counter % 12 === 0 && counter != 0) {
+      rootDelay += columnDelay;
+    }
+    var originalRot = original[counter];
+    var travelDistance = (0, _utils.getActualDistance)(originalRot, destinationRot);
+    var prevDestinationRot = array[counter - 1];
+    var isRightHalfBox = counter % 2 === 1 ? true : false;
+    var destIsSame = destinationRot === prevDestinationRot;
+    var duration = (0, _utils.roundUnitToTwoDecimals)(travelDistance / speed);
+    var delay = (0, _utils.roundUnitToTwoDecimals)(rootDelay);
+    if (!destIsSame && isRightHalfBox) {
+      delay += result[counter - 1].duration;
+      duration = fullCircle / 4 / speed;
+    }
+    result.push({
+      delay: delay,
+      duration: duration,
+      travelDistance: travelDistance,
+      destination: destinationRot,
+      original: originalRot
+    });
+  });
+  return result;
+}
+// can these two functions be reduced to one?
+// it could be combined
+// and the crucial part is deciding
+//  whether destinations straight
+//  whether initials are straight
 
 function compareOriDest(original, destination, loopDuration) {
   var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
@@ -50170,7 +50151,7 @@ function compareOriDest(original, destination, loopDuration) {
   destination.forEach(function (destinationRot, counter) {
     var originalRot = original[counter];
     var diff = Math.abs(destinationRot - originalRot);
-    var travelDistance = getActualDistance(originalRot, destinationRot);
+    var travelDistance = (0, _utils.getActualDistance)(originalRot, destinationRot);
     var isRightHalfBox = counter % 2 === 1 ? true : false;
     var duration = Math.round(travelDistance / speed * 100) / 100;
     var delay = Math.round(rootDelay * 100) / 100;
@@ -50189,26 +50170,68 @@ function compareOriDest(original, destination, loopDuration) {
       destination: destinationRot,
       original: originalRot
     });
-    // console.log('-pushing ')
-    // console.log({
-    //   delay,
-    //   duration,
-    //   destination: destinationRot,
-    //   original: originalRot
-    // });
 
     if (isRightHalfBox & diff != 0) {
       rootDelay += transitionToDelay;
     }
   });
-  // console.log('-final-')
-  // console.log(result)
   return result;
 }
 
+// R - 3
+// T - 3
+function transformDataStructureForTransitionTo(data, duplicateFirst) {
+  // because of how transitionToNumber transition the elements
+  // left, left, right.  left left right. etc
+  // We are modifying the structure to make the animate func more readable
+  return data.reduce(function (accu, value, index) {
+    var isFirstElement = index % 2 === 0;
+    if (isFirstElement === duplicateFirst) {
+      accu.push(value, value);
+    } else {
+      accu.push(value);
+    }
+    return accu;
+  }, []);
+}
+
+function generateInitialStartingPos() {
+  var colStartingRadians = (0, _utils.getColStartingRadians)(16);
+  // console.log(colStartingRadians)
+  return colStartingRadians.map(function (element, index) {
+    var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
+    var remaining = traveledDistance % initialRotation;
+    var result = element - remaining;
+    return result;
+  });
+}
+
+// unit cheked R-3
+function getDestsData(currentNumber) {
+  var data = void 0;
+  data = (0, _store.getData)();
+  data = extractNumberAllData(currentNumber, data);
+  data = (0, _utils.flattenData)(data);
+  data = (0, _utils.convertToRad)(data);
+  data = (0, _utils.roundToFourDecimals)(data);
+  return data;
+}
+
+// unit cheked R-3
+function extractNumberAllData(array, data) {
+  return [data[array[0]].all, data[array[1]].all, data[array[2]].all, data[array[3]].all];
+}
+
+// rewrite compar ori and dest so we can reuse the animateToGoal func
+// write a test for this then
+// 34 lines ... huh.....
+// refactor?
+// R-3
+// T-3
+
+
 exports.prepareAnimation = prepareAnimation;
 exports.updateDisplayTime = updateDisplayTime;
-exports.plusOne = plusOne;
 
 // function prepareForTransitionTo() {
 //   // console.log('-starting-')
@@ -50429,22 +50452,24 @@ exports.plusOne = plusOne;
 //   })
 // }
 // // CAN THIS REALLY BE REFACTORED?
-},{"gsap":17,"./store.js":7,"./utils.js":4}],16:[function(require,module,exports) {
+},{"gsap":10,"./store.js":7,"./animate.js":8,"./utils.js":9}],5:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.prepareUpdates = undefined;
+exports.prepareWatchers = undefined;
 
 var _store = require('./store.js');
 
-var _animate = require('./animate.js');
+var _transition = require('./transition.js');
 
-function prepareUpdates() {
-  attachIncrementListener();
-  installVisibilityListener();
-  updateEveryMinuteOnTime();
+var _utils = require('./utils.js');
+
+function prepareWatchers() {
+  attachIncrementListener(); // plus one
+  installVisibilityListener(); // visible gain update
+  updateEveryMinuteOnTime(); // on the clock update
 }
 
 function updateEveryMinuteOnTime() {
@@ -50453,20 +50478,19 @@ function updateEveryMinuteOnTime() {
 }
 
 // why is directly exporting not undefined?
+// plus one part. own logic to get plus one, then pass it to final decision point
 function attachIncrementListener() {
   var btn = document.getElementsByClassName('increment')[0];
-  btn.addEventListener("click", function () {
-    var masterTimeline = (0, _store.getCurrentTimeline)();
-    if (!masterTimeline.isActive()) {
-      console.log('-not active-');
-      console.log(masterTimeline);
-      (0, _animate.plusOne)();
-    } else {
-      console.log('-active-');
-    }
-  });
+  btn.addEventListener("click", plusOne, false);
 }
 
+function plusOne() {
+  var time = (0, _store.getPrevTime)();
+  var plusOneMinuteTime = (0, _utils.getPlusOneTime)(time);
+  isTimelineFreeForUpdates(plusOneMinuteTime);
+}
+
+// visiblity part, own logic to check if time has changed when it becomes visible again. then pass it to final decision point
 function installVisibilityListener() {
   // Warn if the browser doesn't support addEventListener or the Page Visibility API
   if (typeof document.addEventListener === "undefined" || typeof document.hidden === "undefined") {
@@ -50490,30 +50514,14 @@ function handleVisibilityChange() {
 function checkTimeCorrect() {
   var date = new Date();
   var prevTime = (0, _store.getPrevTime)() || new Date("Thu May 17 1988 17:43:08 GMT+0800 (CST)");
-  var tl = (0, _store.getCurrentTimeline)();
-  var ifTimeChanged = date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes();
-  if (!tl.isActive() && ifTimeChanged) {
-    (0, _store.setPrevTime)(date);
-    (0, _animate.updateDisplayTime)(date);
-  } else {
-    console.log('not gonna update');
+  var isTimeDifferent = date.getHours() !== prevTime.getHours() || date.getMinutes() !== prevTime.getMinutes();
+  if (isTimeDifferent) {
+    isTimelineFreeForUpdates(date);
   }
 }
 
-function updateToCurrentTime() {
-  var tl = (0, _store.getCurrentTimeline)();
-  var isTabActive = (0, _store.getIsTabActive)();
-  // console.log('-checking intervals-')
-  console.log(tl.isActive());
-  console.log(isTabActive);
-  if (!tl.isActive() && isTabActive) {
-    // console.log("---actually updating---")
-    var date = new Date();
-    (0, _store.setPrevTime)(date);
-    (0, _animate.updateDisplayTime)(date);
-  }
-}
-
+//  repeat every minute part
+// pass date to final decision point
 function repeatEvery(func, interval) {
   var now = new Date();
   var delay = interval - now % interval;
@@ -50524,20 +50532,34 @@ function repeatEvery(func, interval) {
   setTimeout(start, delay);
 }
 
-exports.prepareUpdates = prepareUpdates;
-},{"./store.js":7,"./animate.js":5}],2:[function(require,module,exports) {
+function updateToCurrentTime() {
+  var date = new Date();
+  isTimelineFreeForUpdates(date);
+}
+
+// final decision point
+function isTimelineFreeForUpdates(date) {
+  var tl = (0, _store.getCurrentTimeline)();
+  var isTabActive = (0, _store.getIsTabActive)();
+  if (tl.isActive() === false && isTabActive) {
+    (0, _transition.updateDisplayTime)(date);
+  }
+}
+
+exports.prepareWatchers = prepareWatchers;
+},{"./store.js":7,"./transition.js":3,"./utils.js":9}],2:[function(require,module,exports) {
 'use strict';
 
 var _draw = require('./src/draw.js');
 
-var _animate = require('./src/animate.js');
+var _transition = require('./src/transition.js');
 
-var _update = require('./src/update.js');
+var _watcher = require('./src/watcher.js');
 
 (0, _draw.prepareBoard)();
-(0, _animate.prepareAnimation)();
-(0, _update.prepareUpdates)();
-},{"./src/draw.js":6,"./src/animate.js":5,"./src/update.js":16}],15:[function(require,module,exports) {
+(0, _transition.prepareAnimation)();
+(0, _watcher.prepareWatchers)();
+},{"./src/draw.js":4,"./src/transition.js":3,"./src/watcher.js":5}],16:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50559,7 +50581,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = '' || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + '61097' + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '50716' + '/');
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
 
@@ -50660,5 +50682,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[15,2])
+},{}]},{},[16,2])
 //# sourceMappingURL=/dist/three-clock.map
