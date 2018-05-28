@@ -26,24 +26,10 @@ function getPlusOneTime(prevTime) {
 }
 
 
-// unit cheked R-3
-function convertToRad(data) {
-  return data.map(element => {
-    return degToRad(element);
-  });
-}
 
 function roundUnitToFourDecimals(unit) {
   return Math.round(unit * 10000) / 10000;
 }
-
-// unit cheked R-3
-function roundToFourDecimals(data) {
-  return data.map(element => {
-    return Math.round(element * 10000) / 10000;
-  });
-}
-
 
 // unit checked R-2
 // unit tested T-3
@@ -77,12 +63,6 @@ function combine(red, black) {
   return newArray;
 }
 
-// unit cheked R-3
-function flattenData(data) {
-  return data.reduce((accu, value) => {
-    return accu.concat(value)
-  }, [])
-}
 
 function roundUnitToTwoDecimals(number) {
   return Math.round(number * 100) / 100;
@@ -120,12 +100,10 @@ export {
   getColStartingRadians,
   getTimeArray,
   roundUnitToFourDecimals,
-  roundToFourDecimals,
-  convertToRad,
-  flattenData,
   roundUnitToTwoDecimals,
   getActualDistance,
-  getPlusOneTime
+  getPlusOneTime,
+  degToRad
   // arrayPlusOne
 }
 

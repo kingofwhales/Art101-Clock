@@ -20,11 +20,6 @@ function prepareWatchers() {
   updateEveryMinuteOnTime() // on the clock update
 }
 
-function updateEveryMinuteOnTime () {
-  const ONE_MINUTE = 60000;
-  repeatEvery(updateToCurrentTime, ONE_MINUTE);
-}
-
 // why is directly exporting not undefined?
 // plus one part. own logic to get plus one, then pass it to final decision point
 function attachIncrementListener() {
@@ -76,17 +71,15 @@ function checkTimeCorrect() {
 
 //  repeat every minute part
 // pass date to final decision point
-function repeatEvery(func, interval) {
-  const now = new Date()
-  const delay = interval - now % interval
-  function start() {
-    func()
-    setInterval(func, interval)
-  }
-  setTimeout(start, delay)
+function updateEveryMinuteOnTime() {
+  const ONE_MINUTE = 60000;
+  const now = new Date();
+  const delay = ONE_MINUTE - now % ONE_MINUTE;
+  setTimeout(() => {
+    updateToCurrentTime()
+    setInterval(updateToCurrentTime, ONE_MINUTE)
+  }, delay);
 }
-
-
 
 function updateToCurrentTime() {
   const date = new Date();
@@ -98,6 +91,8 @@ function isTimelineFreeForUpdates(date) {
   const tl = getCurrentTimeline()
   const isTabActive = getIsTabActive()
   if (tl.isActive() === false && isTabActive) {
+    // console.log('-at watcher date is')
+    // console.log(date)
     updateDisplayTime(date)
   }
 }

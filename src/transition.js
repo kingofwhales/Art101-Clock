@@ -20,12 +20,13 @@ import {
   getTimeArray,
   getColStartingRadians,
   roundUnitToFourDecimals,
-  roundToFourDecimals,
-  convertToRad,
-  flattenData,
   roundUnitToTwoDecimals,
   getActualDistance
 } from './utils.js'
+
+import {
+  parseData
+} from './parse.js'
 
 const initialDuration = 2;
 const initialRotation = roundUnitToFourDecimals(Math.PI * 2)
@@ -39,7 +40,14 @@ const columnDelay = 0.4
 // const animationTimeline = new TimelineMax()
 
 
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
 // R-3
+// L-1
 function prepareAnimation () {
   const [data, collections] = prepareData()
 
@@ -51,10 +59,10 @@ function prepareAnimation () {
 }
 
 //WHAT does this do?
-// R - 3 
+// R-3
+// L-1
 function updateDisplayTime(date) {
-  const array = getTimeArray(date);
-  const data = getDestsData(array);
+  const data = getDestsData(date);
   const prevData = getCurrentDisplayData();
   const finalData = compareOriDest(prevData, data, transitionToDuration);
   // console.log('-dest-')
@@ -80,35 +88,51 @@ function updateDisplayTime(date) {
 ///// not so sure part
 ///// not so sure part
 
-// R - 3 
+// R-3
+// L-2
 function prepareData() {
-  const pureData = getDataWithTime()
-  const initialStarting = getEstimatedStartingPos()
+  const pureData = getDataWithTime(whenToTransition)
+  const initialStarting = generateInitialStartingPos()
   const detailedData = generateDestinationsDataInitial(initialStarting, pureData, transitionToDuration)
   const transformedData = transformDataStructureForTransitionTo(detailedData, true)
   const transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false)
   return [transformedData, transformedCollections]
 }
 
-function getEstimatedStartingPos() {
-  const initialStarting = generateInitialStartingPos()
-  return initialStarting.reduce((accu, element) => {
-    return accu.concat(Array(12).fill(element))
-  }, [])
-}
-
-function getDataWithTime() {
+function getDataWithTime(offset) {
   // let current = new Date();
-  let current = new Date("Thu May 17 2018 08:47:59 GMT+0800 (CST)");
-  current.setSeconds(current.getSeconds() + whenToTransition)
-  const currentTimeArray = getTimeArray(current);
-  const pureData = getDestsData(currentTimeArray);
+  const current = new Date("Thu May 17 2018 08:47:59 GMT+0800 (CST)");
+  current.setSeconds(current.getSeconds() + offset)
+  // const currentTimeArray = getTimeArray(current);
+  const pureData = getDestsData(current);
   setPrevTime(current)
   setCurrentDisplayData(pureData)
 
   return pureData
 }
 
+// unit cheked R-3
+function getDestsData(current) {
+  const currentTimeArray = getTimeArray(current);
+  const data = getData();
+  const parsedData = parseData(currentTimeArray, data)
+  return parsedData;
+}
+
+function generateInitialStartingPos() {
+  const colStartingRadians = getColStartingRadians(16);
+  // console.log(colStartingRadians)
+  return colStartingRadians.reduce((accumulator, element, index) => {
+    const traveledDistance =
+      (whenToTransition + index * columnDelay) * initialSpeed;
+    const remaining = traveledDistance % initialRotation;
+    const result = roundUnitToFourDecimals(element - remaining);
+    return accumulator.concat(Array(12).fill(result));
+  },
+  []);
+}
+
+// these two could be combined
 function generateDestinationsDataInitial(
   original,
   destination,
@@ -202,39 +226,7 @@ function transformDataStructureForTransitionTo(data, duplicateFirst) {
   }, []);
 }
 
-function generateInitialStartingPos() {
-  const colStartingRadians = getColStartingRadians(16);
-  // console.log(colStartingRadians)
-  return colStartingRadians.map((element, index) => {
-    const traveledDistance =
-      (whenToTransition + index * columnDelay) * initialSpeed;
-    const remaining = traveledDistance % initialRotation;
-    const result = element - remaining;
-    return result;
-  });
-}
 
-
-// unit cheked R-3
-function getDestsData(currentNumber) {
-  let data;
-  data = getData();
-  data = extractNumberAllData(currentNumber, data);
-  data = flattenData(data);
-  data = convertToRad(data);
-  data = roundToFourDecimals(data);
-  return data;
-}
-
-// unit cheked R-3
-function extractNumberAllData(array, data) {
-  return [
-    data[array[0]].all,
-    data[array[1]].all,
-    data[array[2]].all,
-    data[array[3]].all
-  ];
-}
 
 
 

@@ -41373,22 +41373,8 @@ function getPlusOneTime(prevTime) {
   return date;
 }
 
-// unit cheked R-3
-function convertToRad(data) {
-  return data.map(function (element) {
-    return degToRad(element);
-  });
-}
-
 function roundUnitToFourDecimals(unit) {
   return Math.round(unit * 10000) / 10000;
-}
-
-// unit cheked R-3
-function roundToFourDecimals(data) {
-  return data.map(function (element) {
-    return Math.round(element * 10000) / 10000;
-  });
 }
 
 // unit checked R-2
@@ -41445,13 +41431,6 @@ function combine(red, black) {
   return newArray;
 }
 
-// unit cheked R-3
-function flattenData(data) {
-  return data.reduce(function (accu, value) {
-    return accu.concat(value);
-  }, []);
-}
-
 function roundUnitToTwoDecimals(number) {
   return Math.round(number * 100) / 100;
 }
@@ -41486,12 +41465,10 @@ exports.combine = combine;
 exports.getColStartingRadians = getColStartingRadians;
 exports.getTimeArray = getTimeArray;
 exports.roundUnitToFourDecimals = roundUnitToFourDecimals;
-exports.roundToFourDecimals = roundToFourDecimals;
-exports.convertToRad = convertToRad;
-exports.flattenData = flattenData;
 exports.roundUnitToTwoDecimals = roundUnitToTwoDecimals;
 exports.getActualDistance = getActualDistance;
 exports.getPlusOneTime = getPlusOneTime;
+exports.degToRad = degToRad;
 
 // what did we do eventually?
 //  1. first of all, we make the starting radians all positive, from small to big
@@ -50001,7 +49978,52 @@ function animateToGoal(data, collections) {
 
 exports.startLoopingRotations = startLoopingRotations;
 exports.animateToGoal = animateToGoal;
-},{"gsap":10}],3:[function(require,module,exports) {
+},{"gsap":10}],19:[function(require,module,exports) {
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.parseData = undefined;
+
+var _utils = require('./utils.js');
+
+function parseData(currentNumber, originalData) {
+  var data = void 0;
+  data = extractNumberAllData(currentNumber, originalData);
+  data = flattenData(data);
+  data = convertToRad(data);
+  data = roundToFourDecimals(data);
+  return data;
+}
+
+// unit cheked R-3
+function extractNumberAllData(array, data) {
+  return [data[array[0]].all, data[array[1]].all, data[array[2]].all, data[array[3]].all];
+}
+
+// unit cheked R-3
+function flattenData(data) {
+  return data.reduce(function (accu, value) {
+    return accu.concat(value);
+  }, []);
+}
+
+// unit cheked R-3
+function convertToRad(data) {
+  return data.map(function (element) {
+    return (0, _utils.degToRad)(element);
+  });
+}
+// unit cheked R-3
+function roundToFourDecimals(data) {
+  return data.map(function (element) {
+    return Math.round(element * 10000) / 10000;
+  });
+}
+
+exports.parseData = parseData;
+},{"./utils.js":9}],3:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50019,6 +50041,8 @@ var _animate = require('./animate.js');
 
 var _utils = require('./utils.js');
 
+var _parse = require('./parse.js');
+
 var initialDuration = 2;
 var initialRotation = (0, _utils.roundUnitToFourDecimals)(Math.PI * 2);
 var initialSpeed = initialRotation / initialDuration;
@@ -50031,7 +50055,14 @@ var columnDelay = 0.4;
 // const animationTimeline = new TimelineMax()
 
 
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
+// Can top level first time ani be merged with later top level update ani?
 // R-3
+// L-1
 function prepareAnimation() {
   var _prepareData = prepareData(),
       _prepareData2 = _slicedToArray(_prepareData, 2),
@@ -50046,10 +50077,10 @@ function prepareAnimation() {
 }
 
 //WHAT does this do?
-// R - 3 
+// R-3
+// L-1
 function updateDisplayTime(date) {
-  var array = (0, _utils.getTimeArray)(date);
-  var data = getDestsData(array);
+  var data = getDestsData(date);
   var prevData = (0, _store.getCurrentDisplayData)();
   var finalData = compareOriDest(prevData, data, transitionToDuration);
   // console.log('-dest-')
@@ -50074,35 +50105,49 @@ function updateDisplayTime(date) {
 ///// not so sure part
 ///// not so sure part
 
-// R - 3 
+// R-3
+// L-2
 function prepareData() {
-  var pureData = getDataWithTime();
-  var initialStarting = getEstimatedStartingPos();
+  var pureData = getDataWithTime(whenToTransition);
+  var initialStarting = generateInitialStartingPos();
   var detailedData = generateDestinationsDataInitial(initialStarting, pureData, transitionToDuration);
   var transformedData = transformDataStructureForTransitionTo(detailedData, true);
   var transformedCollections = transformDataStructureForTransitionTo(boxesCollection, false);
   return [transformedData, transformedCollections];
 }
 
-function getEstimatedStartingPos() {
-  var initialStarting = generateInitialStartingPos();
-  return initialStarting.reduce(function (accu, element) {
-    return accu.concat(Array(12).fill(element));
-  }, []);
-}
-
-function getDataWithTime() {
+function getDataWithTime(offset) {
   // let current = new Date();
   var current = new Date("Thu May 17 2018 08:47:59 GMT+0800 (CST)");
-  current.setSeconds(current.getSeconds() + whenToTransition);
-  var currentTimeArray = (0, _utils.getTimeArray)(current);
-  var pureData = getDestsData(currentTimeArray);
+  current.setSeconds(current.getSeconds() + offset);
+  // const currentTimeArray = getTimeArray(current);
+  var pureData = getDestsData(current);
   (0, _store.setPrevTime)(current);
   (0, _store.setCurrentDisplayData)(pureData);
 
   return pureData;
 }
 
+// unit cheked R-3
+function getDestsData(current) {
+  var currentTimeArray = (0, _utils.getTimeArray)(current);
+  var data = (0, _store.getData)();
+  var parsedData = (0, _parse.parseData)(currentTimeArray, data);
+  return parsedData;
+}
+
+function generateInitialStartingPos() {
+  var colStartingRadians = (0, _utils.getColStartingRadians)(16);
+  // console.log(colStartingRadians)
+  return colStartingRadians.reduce(function (accumulator, element, index) {
+    var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
+    var remaining = traveledDistance % initialRotation;
+    var result = (0, _utils.roundUnitToFourDecimals)(element - remaining);
+    return accumulator.concat(Array(12).fill(result));
+  }, []);
+}
+
+// these two could be combined
 function generateDestinationsDataInitial(original, destination, loopDuration) {
   var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
@@ -50193,33 +50238,6 @@ function transformDataStructureForTransitionTo(data, duplicateFirst) {
     }
     return accu;
   }, []);
-}
-
-function generateInitialStartingPos() {
-  var colStartingRadians = (0, _utils.getColStartingRadians)(16);
-  // console.log(colStartingRadians)
-  return colStartingRadians.map(function (element, index) {
-    var traveledDistance = (whenToTransition + index * columnDelay) * initialSpeed;
-    var remaining = traveledDistance % initialRotation;
-    var result = element - remaining;
-    return result;
-  });
-}
-
-// unit cheked R-3
-function getDestsData(currentNumber) {
-  var data = void 0;
-  data = (0, _store.getData)();
-  data = extractNumberAllData(currentNumber, data);
-  data = (0, _utils.flattenData)(data);
-  data = (0, _utils.convertToRad)(data);
-  data = (0, _utils.roundToFourDecimals)(data);
-  return data;
-}
-
-// unit cheked R-3
-function extractNumberAllData(array, data) {
-  return [data[array[0]].all, data[array[1]].all, data[array[2]].all, data[array[3]].all];
 }
 
 // rewrite compar ori and dest so we can reuse the animateToGoal func
@@ -50452,7 +50470,7 @@ exports.updateDisplayTime = updateDisplayTime;
 //   })
 // }
 // // CAN THIS REALLY BE REFACTORED?
-},{"gsap":10,"./store.js":7,"./animate.js":8,"./utils.js":9}],5:[function(require,module,exports) {
+},{"gsap":10,"./store.js":7,"./animate.js":8,"./utils.js":9,"./parse.js":19}],5:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50470,11 +50488,6 @@ function prepareWatchers() {
   attachIncrementListener(); // plus one
   installVisibilityListener(); // visible gain update
   updateEveryMinuteOnTime(); // on the clock update
-}
-
-function updateEveryMinuteOnTime() {
-  var ONE_MINUTE = 60000;
-  repeatEvery(updateToCurrentTime, ONE_MINUTE);
 }
 
 // why is directly exporting not undefined?
@@ -50522,14 +50535,14 @@ function checkTimeCorrect() {
 
 //  repeat every minute part
 // pass date to final decision point
-function repeatEvery(func, interval) {
+function updateEveryMinuteOnTime() {
+  var ONE_MINUTE = 60000;
   var now = new Date();
-  var delay = interval - now % interval;
-  function start() {
-    func();
-    setInterval(func, interval);
-  }
-  setTimeout(start, delay);
+  var delay = ONE_MINUTE - now % ONE_MINUTE;
+  setTimeout(function () {
+    updateToCurrentTime();
+    setInterval(updateToCurrentTime, ONE_MINUTE);
+  }, delay);
 }
 
 function updateToCurrentTime() {
@@ -50542,6 +50555,8 @@ function isTimelineFreeForUpdates(date) {
   var tl = (0, _store.getCurrentTimeline)();
   var isTabActive = (0, _store.getIsTabActive)();
   if (tl.isActive() === false && isTabActive) {
+    // console.log('-at watcher date is')
+    // console.log(date)
     (0, _transition.updateDisplayTime)(date);
   }
 }
@@ -50559,7 +50574,7 @@ var _watcher = require('./src/watcher.js');
 (0, _draw.prepareBoard)();
 (0, _transition.prepareAnimation)();
 (0, _watcher.prepareWatchers)();
-},{"./src/draw.js":4,"./src/transition.js":3,"./src/watcher.js":5}],16:[function(require,module,exports) {
+},{"./src/draw.js":4,"./src/transition.js":3,"./src/watcher.js":5}],18:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50682,5 +50697,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[16,2])
+},{}]},{},[18,2])
 //# sourceMappingURL=/dist/three-clock.map
