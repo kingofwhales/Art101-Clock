@@ -50148,6 +50148,8 @@ function generateInitialStartingPos() {
 }
 
 // these two could be combined
+// try refacotring these two
+// then embark on second artwork
 function generateDestinationsDataInitial(original, destination, loopDuration) {
   var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
 
@@ -50184,6 +50186,8 @@ function generateDestinationsDataInitial(original, destination, loopDuration) {
 // and the crucial part is deciding
 //  whether destinations straight
 //  whether initials are straight
+//  will not combine these two until a more simplified solution comes out
+//  otherwise it would be messy. 
 
 function compareOriDest(original, destination, loopDuration) {
   var rootDelay = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
@@ -50195,19 +50199,16 @@ function compareOriDest(original, destination, loopDuration) {
   var length = original.length;
   destination.forEach(function (destinationRot, counter) {
     var originalRot = original[counter];
-    var diff = Math.abs(destinationRot - originalRot);
     var travelDistance = (0, _utils.getActualDistance)(originalRot, destinationRot);
     var isRightHalfBox = counter % 2 === 1 ? true : false;
     var duration = Math.round(travelDistance / speed * 100) / 100;
+    var prevRot = original[counter - 1];
+    var whetherStraight = originalRot === prevRot;
     var delay = Math.round(rootDelay * 100) / 100;
     var item = void 0;
-    if (isRightHalfBox && diff != 0) {
-      var prevRot = original[counter - 1];
-      var whetherStraight = originalRot === prevRot;
-      if (!whetherStraight) {
-        //if not straight, delay to align first and then rotate
-        delay = delay + quarterDelay;
-      }
+    if (isRightHalfBox && !whetherStraight) {
+      //if not straight, delay to align first and then rotate
+      delay = delay + quarterDelay;
     }
     result.push({
       delay: delay,
@@ -50215,8 +50216,7 @@ function compareOriDest(original, destination, loopDuration) {
       destination: destinationRot,
       original: originalRot
     });
-
-    if (isRightHalfBox & diff != 0) {
+    if (isRightHalfBox && travelDistance != 0) {
       rootDelay += transitionToDelay;
     }
   });

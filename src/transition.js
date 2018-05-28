@@ -133,6 +133,8 @@ function generateInitialStartingPos() {
 }
 
 // these two could be combined
+// try refacotring these two
+// then embark on second artwork
 function generateDestinationsDataInitial(
   original,
   destination,
@@ -172,6 +174,8 @@ function generateDestinationsDataInitial(
 // and the crucial part is deciding
 //  whether destinations straight
 //  whether initials are straight
+//  will not combine these two until a more simplified solution comes out
+//  otherwise it would be messy. 
 
 function compareOriDest(original, destination, loopDuration, rootDelay = 0) {
   const result = [];
@@ -181,19 +185,16 @@ function compareOriDest(original, destination, loopDuration, rootDelay = 0) {
   const length = original.length;
   destination.forEach((destinationRot, counter) => {
     const originalRot = original[counter];
-    const diff = Math.abs(destinationRot - originalRot);
     const travelDistance = getActualDistance(originalRot, destinationRot);
     const isRightHalfBox = counter % 2 === 1 ? true : false;
     const duration = Math.round(travelDistance / speed * 100) / 100;
+    const prevRot = original[counter - 1];
+    const whetherStraight = originalRot === prevRot;
     let delay = Math.round(rootDelay * 100) / 100;
     let item;
-    if (isRightHalfBox && diff != 0) {
-      const prevRot = original[counter - 1];
-      const whetherStraight = originalRot === prevRot;
-      if (!whetherStraight) {
-        //if not straight, delay to align first and then rotate
-        delay = delay + quarterDelay;
-      }
+    if (isRightHalfBox && !whetherStraight) {
+      //if not straight, delay to align first and then rotate
+      delay = delay + quarterDelay;
     }
     result.push({
       delay,
@@ -201,8 +202,7 @@ function compareOriDest(original, destination, loopDuration, rootDelay = 0) {
       destination: destinationRot,
       original: originalRot
     });
-
-    if (isRightHalfBox & (diff != 0)) {
+    if (isRightHalfBox && travelDistance != 0) {
       rootDelay += transitionToDelay;
     }
   });
@@ -236,9 +236,6 @@ function transformDataStructureForTransitionTo(data, duplicateFirst) {
 // refactor?
 // R-3
 // T-3
-
-
-
 
 
 
