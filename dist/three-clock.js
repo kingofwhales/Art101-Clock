@@ -71,7 +71,7 @@ require = (function (modules, cache, entry) {
 
   // Override the current require with this new one
   return newRequire;
-})({11:[function(require,module,exports) {
+})({33:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41340,7 +41340,7 @@ exports.Projector = Projector;
 exports.CanvasRenderer = CanvasRenderer;
 exports.SceneUtils = SceneUtils;
 exports.LensFlare = LensFlare;
-},{}],9:[function(require,module,exports) {
+},{}],44:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -41611,7 +41611,7 @@ exports.degToRad = degToRad;
 // // function arrayPlusOne (array) {
 
 // // }
-},{}],7:[function(require,module,exports) {
+},{}],43:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41767,7 +41767,7 @@ exports.getCurrentTimeline = getCurrentTimeline;
 exports.setCurrentTimeline = setCurrentTimeline;
 exports.getIsTabActive = getIsTabActive;
 exports.setIsTabActive = setIsTabActive;
-},{"./utils.js":9}],4:[function(require,module,exports) {
+},{"./utils.js":44}],40:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41926,7 +41926,7 @@ function render() {
 }
 
 exports.prepareBoard = prepareBoard;
-},{"three":11,"./store.js":7,"./utils.js":9}],10:[function(require,module,exports) {
+},{"three":33,"./store.js":43,"./utils.js":44}],45:[function(require,module,exports) {
 var global = (1,eval)("this");
 /*!
  * VERSION: 1.20.4
@@ -49905,7 +49905,7 @@ if (_gsScope._gsDefine) { _gsScope._gsQueue.pop()(); } //necessary in case Tween
 		_tickerActive = false; //ensures that the first official animation forces a ticker.tick() to update the time when it is instantiated
 
 })((typeof(module) !== "undefined" && module.exports && typeof(global) !== "undefined") ? global : this || window, "TweenMax");
-},{}],8:[function(require,module,exports) {
+},{}],46:[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -49978,7 +49978,7 @@ function animateToGoal(data, collections) {
 
 exports.startLoopingRotations = startLoopingRotations;
 exports.animateToGoal = animateToGoal;
-},{"gsap":10}],19:[function(require,module,exports) {
+},{"gsap":45}],47:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50023,7 +50023,7 @@ function roundToFourDecimals(data) {
 }
 
 exports.parseData = parseData;
-},{"./utils.js":9}],3:[function(require,module,exports) {
+},{"./utils.js":44}],41:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50470,7 +50470,7 @@ exports.updateDisplayTime = updateDisplayTime;
 //   })
 // }
 // // CAN THIS REALLY BE REFACTORED?
-},{"gsap":10,"./store.js":7,"./animate.js":8,"./utils.js":9,"./parse.js":19}],5:[function(require,module,exports) {
+},{"gsap":45,"./store.js":43,"./animate.js":46,"./utils.js":44,"./parse.js":47}],42:[function(require,module,exports) {
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -50562,7 +50562,7 @@ function isTimelineFreeForUpdates(date) {
 }
 
 exports.prepareWatchers = prepareWatchers;
-},{"./store.js":7,"./transition.js":3,"./utils.js":9}],2:[function(require,module,exports) {
+},{"./store.js":43,"./transition.js":41,"./utils.js":44}],39:[function(require,module,exports) {
 'use strict';
 
 var _draw = require('./src/draw.js');
@@ -50571,10 +50571,16 @@ var _transition = require('./src/transition.js');
 
 var _watcher = require('./src/watcher.js');
 
-(0, _draw.prepareBoard)();
+(0, _draw.prepareBoard)(); // scene 1
+// scene 1
+// scene 1
+// scene 1
+// scene 1
+// scene 1
+
 (0, _transition.prepareAnimation)();
 (0, _watcher.prepareWatchers)();
-},{"./src/draw.js":4,"./src/transition.js":3,"./src/watcher.js":5}],18:[function(require,module,exports) {
+},{"./src/draw.js":40,"./src/transition.js":41,"./src/watcher.js":42}],38:[function(require,module,exports) {
 
 var global = (1, eval)('this');
 var OldModule = module.bundle.Module;
@@ -50697,5 +50703,5 @@ function hmrAccept(bundle, id) {
     return hmrAccept(global.require, id);
   });
 }
-},{}]},{},[18,2])
+},{}]},{},[38,39])
 //# sourceMappingURL=/dist/three-clock.map

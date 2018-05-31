@@ -1,3 +1,10 @@
+// scene 1
+// scene 1
+// scene 1
+// scene 1
+// scene 1
+// scene 1
+
 import {
   prepareBoard
 } from './src/draw.js'
